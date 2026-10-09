@@ -1,7 +1,7 @@
 // Service worker: offline cache, update handover, and showing push reminders.
 // Bump CACHE whenever you change any file so phones pick up the new version.
 
-const CACHE = "ss-v6";
+const CACHE = "ss-v7";
 const FILES = [
   "./",
   "index.html",
