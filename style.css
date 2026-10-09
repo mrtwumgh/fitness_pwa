@@ -13,5 +13,7 @@ a{color:var(--ac)}input,select{background:var(--bg);color:var(--tx);border:1px s
 .bar{height:.7rem;background:var(--bg);border-radius:1rem;overflow:hidden}.bar i{display:block;height:100%;background:#4aa8e0}
 nav{position:fixed;bottom:0;left:0;right:0;display:flex;background:var(--sf);padding-bottom:env(safe-area-inset-bottom)}nav button{flex:1;min-height:3.6rem;background:none;border:0;color:var(--mu);font-size:1rem}nav button.on{color:var(--ac);font-weight:700}
 #tb{position:fixed;left:.6rem;right:.6rem;bottom:calc(4.2rem + env(safe-area-inset-bottom));background:var(--ac);color:#241a00;border-radius:.8rem;padding:.6rem 1rem;display:flex;justify-content:space-between;align-items:center}#tb[hidden]{display:none}#tb b{font-size:1.4rem}#tb button{background:#241a00;color:var(--ac);border:0;border-radius:.5rem;padding:.5rem .9rem;font-size:1rem}
+.links{display:flex;justify-content:space-between;align-items:center;gap:1rem}.link{background:none;border:0;color:var(--mu);text-decoration:underline;font-size:.92rem;min-height:2.6rem;padding:0}
+#tb span{flex:1;margin-right:.6rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 summary{font-weight:700;min-height:2.5rem}label{display:block;margin:.7rem 0}code{word-break:break-all;color:var(--ac)}.steps{padding-left:1.2rem}
 button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visible{outline:2px solid #fff;outline-offset:2px}
