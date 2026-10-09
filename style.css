@@ -1,19 +1,177 @@
-:root{--bg:#15171c;--sf:#1f232b;--tx:#eceff4;--mu:#9aa3b2;--ac:#f2b631;--ok:#46b97a;color-scheme:dark}
-*{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--tx);font:16px/1.5 "Avenir Next",Seravek,"Segoe UI",Roboto,sans-serif;padding:env(safe-area-inset-top) 0 calc(4.8rem + env(safe-area-inset-bottom))}
-main{max-width:34rem;margin:auto;padding:1rem}
-h1{font-size:1.6rem;margin:.2rem 0 .4rem;letter-spacing:-.01em}h2{font-size:1.05rem;margin:0 0 .2rem}
-.big{font-size:4.2rem;font-weight:800;color:var(--ac);line-height:1}
-.card{background:var(--sf);border-radius:.9rem;padding:1rem;margin:.8rem 0;border-left:4px solid transparent}.card.ok{border-color:var(--ok)}
-.dose{color:var(--ac);font-weight:700;margin:0 0 .4rem}.cue,.note,.sub{color:var(--mu);font-size:.92rem;margin:.3rem 0}
-.row{display:flex;gap:.5rem;flex-wrap:wrap;margin:.6rem 0}
-.chip{width:2.9rem;height:2.9rem;border-radius:50%;border:2px solid var(--mu);background:none;color:var(--tx);font-weight:700;font-size:1rem}.chip.on{background:var(--ok);border-color:var(--ok);color:#06210f}
-.btn{min-height:2.9rem;padding:0 1.1rem;border:0;border-radius:.7rem;background:var(--ac);color:#241a00;font-weight:700;font-size:1rem}.btn.danger{background:#c0483f;color:#fff;width:100%}.btn.wide{width:100%}
-a{color:var(--ac)}input,select{background:var(--bg);color:var(--tx);border:1px solid var(--mu);border-radius:.4rem;padding:.4rem;font-size:1rem;max-width:5.5rem}select{max-width:none}
-.bar{height:.7rem;background:var(--bg);border-radius:1rem;overflow:hidden}.bar i{display:block;height:100%;background:#4aa8e0}
-nav{position:fixed;bottom:0;left:0;right:0;display:flex;background:var(--sf);padding-bottom:env(safe-area-inset-bottom)}nav button{flex:1;min-height:3.6rem;background:none;border:0;color:var(--mu);font-size:1rem}nav button.on{color:var(--ac);font-weight:700}
-#tb{position:fixed;left:.6rem;right:.6rem;bottom:calc(4.2rem + env(safe-area-inset-bottom));background:var(--ac);color:#241a00;border-radius:.8rem;padding:.6rem 1rem;display:flex;justify-content:space-between;align-items:center}#tb[hidden]{display:none}#tb b{font-size:1.4rem}#tb button{background:#241a00;color:var(--ac);border:0;border-radius:.5rem;padding:.5rem .9rem;font-size:1rem}
-.links{display:flex;justify-content:space-between;align-items:center;gap:1rem}.link{background:none;border:0;color:var(--mu);text-decoration:underline;font-size:.92rem;min-height:2.6rem;padding:0}
-#tb span{flex:1;margin-right:.6rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-summary{font-weight:700;min-height:2.5rem}label{display:block;margin:.7rem 0}code{word-break:break-all;color:var(--ac)}.steps{padding-left:1.2rem}
-button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visible{outline:2px solid #fff;outline-offset:2px}
+:root {
+  --bg: #15171c;
+  --surface: #1f232b;
+  --text: #eceff4;
+  --muted: #9aa3b2;
+  --accent: #f2b631;
+  --accent-ink: #241a00;
+  --ok: #46b97a;
+  --water: #4aa8e0;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font: 16px/1.5 "Avenir Next", Seravek, "Segoe UI", Roboto, sans-serif;
+  padding: env(safe-area-inset-top) 0 calc(4.8rem + env(safe-area-inset-bottom));
+}
+
+main { max-width: 34rem; margin: auto; padding: 1rem; }
+
+h1 { font-size: 1.6rem; margin: 0.2rem 0 0.4rem; letter-spacing: -0.01em; }
+h2 { font-size: 1.05rem; margin: 0 0 0.2rem; }
+h2.gap { margin-top: 0.8rem; }
+
+.big { font-size: 4.2rem; font-weight: 800; color: var(--accent); line-height: 1; }
+
+.card {
+  background: var(--surface);
+  border-radius: 0.9rem;
+  padding: 1rem;
+  margin: 0.8rem 0;
+  border-left: 4px solid transparent;
+}
+.card.ok { border-color: var(--ok); }
+
+.dose { color: var(--accent); font-weight: 700; margin: 0 0 0.4rem; }
+.cue, .note, .sub { color: var(--muted); font-size: 0.92rem; margin: 0.3rem 0; }
+.steps { padding-left: 1.2rem; }
+
+.row { display: flex; gap: 0.5rem; flex-wrap: wrap; margin: 0.6rem 0; }
+.links { display: flex; justify-content: space-between; align-items: center; gap: 1rem; }
+
+/* Buttons */
+.btn {
+  min-height: 2.9rem;
+  padding: 0 1.1rem;
+  border: 0;
+  border-radius: 0.7rem;
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-weight: 700;
+  font-size: 1rem;
+}
+.btn.wide { width: 100%; }
+.btn.danger { background: #c0483f; color: #fff; width: 100%; }
+
+.chip {
+  width: 2.9rem; height: 2.9rem;
+  border-radius: 50%;
+  border: 2px solid var(--muted);
+  background: none;
+  color: var(--text);
+  font-weight: 700;
+  font-size: 1rem;
+}
+.chip.on { background: var(--ok); border-color: var(--ok); color: #06210f; }
+
+.pill {
+  min-height: 2.6rem;
+  padding: 0 1rem;
+  border-radius: 1.3rem;
+  border: 2px solid var(--muted);
+  background: none;
+  color: var(--text);
+  font-size: 1rem;
+}
+.pill.on { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); font-weight: 700; }
+
+.link {
+  background: none; border: 0; padding: 0;
+  min-height: 2.6rem;
+  color: var(--muted);
+  text-decoration: underline;
+  font-size: 0.92rem;
+}
+
+a { color: var(--accent); }
+
+/* Form controls */
+label { display: block; margin: 0.7rem 0; }
+input, select {
+  background: var(--bg);
+  color: var(--text);
+  border: 1px solid var(--muted);
+  border-radius: 0.4rem;
+  padding: 0.4rem;
+  font-size: 1rem;
+  max-width: 5.5rem;
+}
+select { max-width: none; }
+summary { font-weight: 700; min-height: 2.5rem; }
+
+/* Water progress */
+.bar { height: 0.7rem; background: var(--bg); border-radius: 1rem; overflow: hidden; }
+.bar i { display: block; height: 100%; background: var(--water); }
+
+/* Bottom navigation */
+nav {
+  position: fixed; bottom: 0; left: 0; right: 0;
+  display: flex;
+  background: var(--surface);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+nav button {
+  flex: 1;
+  min-height: 3.6rem;
+  background: none; border: 0;
+  color: var(--muted);
+  font-size: 1rem;
+}
+nav button.on { color: var(--accent); font-weight: 700; }
+
+/* Floating bars: timer and messages sit above the navigation */
+.timer, .toast {
+  position: fixed;
+  left: 0.6rem; right: 0.6rem;
+  border-radius: 0.8rem;
+  padding: 0.6rem 1rem;
+}
+.timer {
+  bottom: calc(4.2rem + env(safe-area-inset-bottom));
+  background: var(--accent);
+  color: var(--accent-ink);
+  display: flex; justify-content: space-between; align-items: center;
+}
+.timer span { flex: 1; margin-right: 0.6rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.timer b { font-size: 1.4rem; }
+.timer button {
+  margin-left: 0.6rem;
+  background: var(--accent-ink); color: var(--accent);
+  border: 0; border-radius: 0.5rem;
+  padding: 0.5rem 0.9rem;
+  font-size: 1rem;
+}
+.toast {
+  bottom: calc(8.2rem + env(safe-area-inset-bottom));
+  background: var(--text);
+  color: var(--bg);
+  font-weight: 600;
+}
+
+/* Update banner at the top */
+.update {
+  position: sticky; top: 0; z-index: 2;
+  display: flex; justify-content: space-between; align-items: center; gap: 1rem;
+  padding: 0.6rem 1rem;
+  background: var(--ok);
+  color: #06210f;
+  font-weight: 600;
+}
+.update button {
+  background: #06210f; color: var(--ok);
+  border: 0; border-radius: 0.5rem;
+  padding: 0.5rem 0.9rem;
+  font-size: 1rem;
+}
+
+[hidden] { display: none !important; }
+
+button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible, summary:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 2px;
+}

@@ -1,24 +1,71 @@
-const C='ss-v3',A=['./','index.html','style.css','app.js','manifest.webmanifest','icon-192.png','icon-512.png','badge-96.png'];
-self.addEventListener('install',e=>{e.waitUntil(caches.open(C).then(c=>c.addAll(A)));self.skipWaiting()});
-self.addEventListener('activate',e=>e.waitUntil(caches.keys().then(k=>Promise.all(k.filter(x=>x!=C).map(x=>caches.delete(x)))).then(()=>self.clients.claim())));
-self.addEventListener('fetch',e=>{if(e.request.method!='GET'||!e.request.url.startsWith(self.location.origin))return;e.respondWith(caches.match(e.request).then(r=>{const n=fetch(e.request).then(x=>{const y=x.clone();caches.open(C).then(c=>c.put(e.request,y));return x}).catch(()=>r);return r||n}))});
+// Service worker: offline cache, update handover, and showing push reminders.
+// Bump CACHE whenever you change any file so phones pick up the new version.
 
-// Reminder arrives from the worker
-self.addEventListener('push',e=>{
-  let d={};
-  try{d=e.data?e.data.json():{}}catch(_){d={body:e.data&&e.data.text()}}
-  e.waitUntil(self.registration.showNotification(d.title||'Strength Start',{
-    body:d.body||'',tag:d.tag||'reminder',renotify:true,
-    icon:'icon-192.png',badge:'badge-96.png',vibrate:[300,120,300],
-    data:{url:'./'}
+const CACHE = 'ss-v4';
+const FILES = [
+  './', 'index.html', 'style.css', 'manifest.webmanifest',
+  'icon-192.png', 'icon-512.png', 'badge-96.png',
+  'js/main.js', 'js/config.js', 'js/util.js', 'js/data.js', 'js/state.js', 'js/plan.js',
+  'js/timer.js', 'js/push.js', 'js/toast.js',
+  'js/views/today.js', 'js/views/plan.js', 'js/views/settings.js',
+];
+
+// Install quietly and wait: the app shows an "update ready" banner and tells us when to take over.
+self.addEventListener('install', event => {
+  event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(FILES)));
+});
+
+self.addEventListener('message', event => {
+  if (event.data === 'skip-waiting') self.skipWaiting();
+});
+
+self.addEventListener('activate', event => {
+  event.waitUntil(
+    caches.keys()
+      .then(keys => Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k))))
+      .then(() => self.clients.claim()),
+  );
+});
+
+// Serve from cache straight away, refreshing the cached copy in the background.
+self.addEventListener('fetch', event => {
+  if (event.request.method !== 'GET' || !event.request.url.startsWith(self.location.origin)) return;
+  event.respondWith(
+    caches.match(event.request).then(cached => {
+      const fresh = fetch(event.request)
+        .then(response => {
+          const copy = response.clone();
+          caches.open(CACHE).then(cache => cache.put(event.request, copy));
+          return response;
+        })
+        .catch(() => cached);
+      return cached || fresh;
+    }),
+  );
+});
+
+// A reminder arrives from the worker.
+self.addEventListener('push', event => {
+  let data = {};
+  try { data = event.data ? event.data.json() : {}; } catch { data = { body: event.data && event.data.text() }; }
+  event.waitUntil(self.registration.showNotification(data.title || 'Strength Start', {
+    body: data.body || '',
+    tag: data.tag || 'reminder',
+    renotify: true,
+    icon: 'icon-192.png',
+    badge: 'badge-96.png',
+    vibrate: [300, 120, 300],
+    data: { url: './' },
   }));
 });
 
-// Tapping the reminder opens (or focuses) the app
-self.addEventListener('notificationclick',e=>{
-  e.notification.close();
-  e.waitUntil(self.clients.matchAll({type:'window',includeUncontrolled:true}).then(cs=>{
-    for(const c of cs)if('focus'in c)return c.focus();
-    return self.clients.openWindow(e.notification.data&&e.notification.data.url||'./');
-  }));
+// Tapping a reminder opens (or focuses) the app.
+self.addEventListener('notificationclick', event => {
+  event.notification.close();
+  event.waitUntil(
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(windows => {
+      for (const w of windows) if ('focus' in w) return w.focus();
+      return self.clients.openWindow(event.notification.data?.url || './');
+    }),
+  );
 });
