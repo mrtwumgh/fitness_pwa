@@ -5,6 +5,7 @@ import { st, save, logFor, resetAll } from './state.js';
 import { todaysItems, restSeconds, changeLevel } from './plan.js';
 import { startTimer, skipTimer, resumeWakeLock } from './timer.js';
 import { syncReminders, turnOnReminders, turnOffReminders, sendTest } from './push.js';
+import { openVideo, closeVideo } from './video.js';
 import { toast } from './toast.js';
 import { $, dateKey } from './util.js';
 import { todayView } from './views/today.js';
@@ -32,6 +33,9 @@ function commit() {
 // ---------- taps ----------
 
 document.addEventListener('click', event => {
+  // Tapping the dark area around the video sheet closes it.
+  if (event.target.id === 'player') { closeVideo(); return; }
+
   const button = event.target.closest('[data-action]');
   if (!button) return;
   const { action, id, value } = button.dataset;
@@ -40,6 +44,14 @@ document.addEventListener('click', event => {
     case 'tab':
       tab = button.dataset.tab;
       render();
+      return;
+
+    case 'video':
+      openVideo(button.dataset.exercise);
+      return;
+
+    case 'close-video':
+      closeVideo();
       return;
 
     case 'skip':
@@ -167,6 +179,33 @@ document.addEventListener('change', event => {
   if (field === 'level' || field === 'waterGoal') render();
   syncReminders();
 });
+
+// ---------- demo images that fail to load ----------
+// Image errors don't bubble, so listen in the capture phase.
+
+/** Must match MEDIA_CACHE in sw.js. */
+const MEDIA_CACHE = 'ss-media-v1';
+
+document.addEventListener('error', event => {
+  const img = event.target;
+  if (!(img instanceof HTMLImageElement)) return;
+
+  if (img.classList.contains('demo-gif')) {
+    // Forget any saved copy so the next visit tries the network again.
+    if ('caches' in window) caches.open(MEDIA_CACHE).then(cache => cache.delete(img.src)).catch(() => {});
+    const figure = img.closest('.demo');
+    const fallback = figure?.querySelector('.demo-fallback');
+    if (fallback) {
+      img.remove();
+      figure.querySelector('figcaption')?.remove();
+      fallback.hidden = false;
+    } else {
+      figure?.remove();   // the card's "Watch video" link is still there
+    }
+  } else if (img.classList.contains('demo-thumb')) {
+    img.remove();   // the play button still works on a plain background
+  }
+}, true);
 
 // ---------- coming back to the app ----------
 

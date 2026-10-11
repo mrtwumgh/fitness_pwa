@@ -1,7 +1,11 @@
 // Service worker: offline cache, update handover, and showing push reminders.
 // Bump CACHE whenever you change any file so phones pick up the new version.
 
-const CACHE = "ss-v7";
+const CACHE = "ss-v8";
+// Exercise animations, saved the first time each one is shown so they also work offline.
+// Kept across app updates: only change this name to force every animation to download again.
+const MEDIA_CACHE = "ss-media-v1";
+const MEDIA_HOST = "static.exercisedb.dev";
 const FILES = [
   "./",
   "index.html",
@@ -19,6 +23,7 @@ const FILES = [
   "js/timer.js",
   "js/push.js",
   "js/toast.js",
+  "js/video.js",
   "js/views/today.js",
   "js/views/plan.js",
   "js/views/settings.js",
@@ -49,7 +54,9 @@ self.addEventListener("activate", (event) => {
       .keys()
       .then((keys) =>
         Promise.all(
-          keys.filter((k) => k !== CACHE).map((k) => caches.delete(k)),
+          keys
+            .filter((k) => k !== CACHE && k !== MEDIA_CACHE)
+            .map((k) => caches.delete(k)),
         ),
       )
       .then(() => self.clients.claim()),
@@ -59,11 +66,29 @@ self.addEventListener("activate", (event) => {
 // Serve from cache straight away, refreshing the cached copy in the background.
 // The refresh checks with the server ('no-cache') rather than reusing the browser's HTTP cache.
 self.addEventListener("fetch", (event) => {
-  if (
-    event.request.method !== "GET" ||
-    !event.request.url.startsWith(self.location.origin)
-  )
+  if (event.request.method !== "GET") return;
+
+  // Exercise animations: use the saved copy if there is one, otherwise download and save it.
+  // (If a saved copy turns out to be broken, the app deletes it so it's fetched again.)
+  if (new URL(event.request.url).hostname === MEDIA_HOST) {
+    event.respondWith(
+      caches.open(MEDIA_CACHE).then((cache) =>
+        cache.match(event.request).then(
+          (saved) =>
+            saved ||
+            fetch(event.request).then((response) => {
+              if (response.ok || response.type === "opaque")
+                cache.put(event.request, response.clone());
+              return response;
+            }),
+        ),
+      ),
+    );
     return;
+  }
+
+  // Anything else from another site (YouTube) goes straight to the network.
+  if (!event.request.url.startsWith(self.location.origin)) return;
   event.respondWith(
     caches.match(event.request).then((cached) => {
       const fresh = fetch(event.request, { cache: "no-cache" })

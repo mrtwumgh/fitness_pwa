@@ -3,86 +3,121 @@
 
 /**
  * Every exercise the program uses.
- *   unit:   'reps' or 'seconds' (seconds get a hold timer)
- *   per:    extra label after the dose, e.g. 'per side'
- *   neck:   true = only on neck days (Mon, Wed, Fri)
- *   search: YouTube search text; defaults to "<name> beginner form"
+ *   unit:    'reps' or 'seconds' (seconds get a hold timer)
+ *   per:     extra label after the dose, e.g. 'per side'
+ *   neck:    true = only on neck days (Mon, Wed, Fri)
+ *   gif:     ExerciseDB animation id, shown on the card (see DEMO_GIF_URL)
+ *   gifNote: shown under the animation when it differs from how we do it
+ *   video:   { id, by } — YouTube video played inside the app
+ *   search:  YouTube search text, only used if the animation can't load and there's no video
+ *
+ * Animations and videos were matched to the cues below by hand. Every exercise has one or both.
  */
 export const EXERCISES = {
   wallPushUp: {
     name: 'Wall push-up', unit: 'reps',
+    gif: 'LEH9jxP',
     cue: 'Hands on a wall at shoulder height, body straight. Bend your elbows (about 45° from your body) to bring your chest to the wall, then push back.',
   },
   inclinePushUp: {
     name: 'Incline push-up', unit: 'reps',
+    gif: 'F7vjXqT',
+    video: { id: '0JUrOH--Kdk', by: 'NASM' },
     cue: 'Hands on a sturdy table, body straight. Lower your chest to the edge with elbows about 45°, then press up.',
   },
   kneePushUp: {
     name: 'Knee push-up', unit: 'reps',
+    gif: 'ZOuKWir',
+    video: { id: 'PDr5B2jLUOw', by: 'NASM' },
     cue: 'Hands under shoulders, knees down, body straight from head to knees. Lower your chest, then press up.',
   },
   pushUp: {
     name: 'Push-up', unit: 'reps',
+    gif: 'I4hDWkc',
+    video: { id: 'WDIpL0pjun0', by: 'NASM' },
     cue: 'Hands slightly wider than shoulders, body straight from head to heels. Lower your chest with elbows about 45°, press up without sagging your hips.',
   },
   pikePushUp: {
     name: 'Pike push-up', unit: 'reps',
+    video: { id: '2b5t0Cu2nQI', by: 'NASM' },
     cue: 'Hips high in an upside-down V. Bend your elbows to lower your head toward the floor between your hands, then press up.',
   },
   chairDip: {
     name: 'Chair dip', unit: 'reps', search: 'bench dips beginner form',
+    gif: 'RrLske5', gifNote: 'Shown on a bench. A sturdy chair against a wall works the same.',
     cue: 'Hands on the edge of a sturdy chair placed against a wall, knees bent. Lower your elbows straight back only as deep as is comfortable, then press up.',
   },
   backpackRow: {
     name: 'Backpack row', unit: 'reps', search: 'backpack bent over row form',
+    gif: 'BJ0Hz5L', gifNote: 'Shown with dumbbells. Hold your backpack the same way.',
     cue: 'Hold a loaded backpack, hinge at the hips with a flat back. Pull the bag to your lower ribs, squeeze your shoulder blades, lower slowly. Start light.',
   },
   superman: {
     name: 'Superman', unit: 'reps',
+    video: { id: 'J9zXkxUAfUA', by: "Children's Hospital Colorado" },
     cue: 'Lie face down, arms forward. Lift arms and legs slightly with a neutral neck, hold 2 seconds, lower.',
   },
   plank: {
     name: 'Forearm plank', unit: 'seconds',
+    video: { id: 'mwlp75MS6Rg', by: 'NASM' },
     cue: 'Forearms down, elbows under shoulders, body straight from head to heels, stomach tight, hips not sagging.',
   },
   deadBug: {
     name: 'Dead bug', unit: 'reps', per: 'per side',
+    gif: 'iny3m5y',
+    video: { id: 'bxn9FBrt4-A', by: 'NASM' },
     cue: 'On your back, arms up, knees bent 90° over your hips. Lower the opposite arm and leg with your lower back pressed down, then switch.',
   },
   birdDog: {
     name: 'Bird dog', unit: 'reps', per: 'per side',
+    video: { id: 'ZdAHe9_HeEw', by: 'NASM' },
     cue: 'On hands and knees, extend the opposite arm and leg with level hips, hold 2 seconds, switch.',
   },
   chairSquat: {
     name: 'Chair squat', unit: 'reps',
+    video: { id: 'OViE2ghEop0', by: 'Mass General Hospital' },
     cue: 'Feet shoulder-width in front of a chair. Push your hips back and bend your knees until you lightly touch the seat, then stand through your heels.',
   },
   squat: {
     name: 'Squat', unit: 'reps',
+    gif: 'HsvHqgf', gifNote: 'Shown with dumbbells. Do it without weights.',
+    video: { id: 'UYbsgiiZgao', by: 'NASM' },
     cue: 'Feet shoulder-width, hips back, chest up, knees over toes. Lower to about parallel, then stand.',
   },
   reverseLunge: {
     name: 'Reverse lunge', unit: 'reps', per: 'per side',
+    gif: 'SSsBDwB', gifNote: 'Shown with dumbbells. Do it without weights.',
     cue: 'Step one foot back and lower until both knees are about 90°. Push through the front heel and alternate legs. Hold a wall if needed.',
   },
   gluteBridge: {
     name: 'Glute bridge', unit: 'reps',
+    gif: 'u0cNiij',
     cue: 'On your back, knees bent. Lift your hips, squeezing your glutes, until shoulders to knees is a straight line. Pause 1 second, lower slowly.',
   },
   calfRaise: {
     name: 'Calf raise', unit: 'reps',
+    gif: 'bJYHBIN',
     cue: 'Hold a wall, rise onto your toes, lower slowly.',
   },
   neckIsometrics: {
     name: 'Neck isometrics', unit: 'seconds', per: 'per direction', neck: true,
     search: 'neck isometric exercises physiotherapist',
+    video: { id: 'j9Gy2HFo7W0', by: 'Physio REHAB (Tim Keeley, physiotherapist)' },
     cue: 'Sit tall. Press your palm against your forehead, then each side of your head, then the back of your head. Your head must not move. Push gently and hold. One round = all 4 directions. Go gently, never jerk, stop if you feel pain or dizziness.',
   },
   chinTuck: {
     name: 'Chin tuck', unit: 'reps', neck: true, search: 'chin tucks physiotherapist',
+    video: { id: '7rnlAVhAK-8', by: 'Ask Doctor Jo (physical therapist)' },
     cue: 'Sit tall looking ahead. Draw your chin straight back without tilting your head, hold 5 seconds.',
   },
 };
+
+/** Where demo animations and videos come from. */
+export const DEMO_GIF_URL = id => `https://static.exercisedb.dev/media/${id}.gif`;
+export const DEMO_GIF_CREDIT = 'Animation © Gym visual (gymvisual.com) via ExerciseDB';
+export const VIDEO_EMBED_URL = id =>
+  `https://www.youtube-nocookie.com/embed/${id}?autoplay=1&playsinline=1&rel=0&modestbranding=1`;
+export const VIDEO_THUMB_URL = id => `https://i.ytimg.com/vi/${id}/hqdefault.jpg`;
 
 /**
  * Levels 1 to 6. Each entry is [exercise, sets, reps or seconds].

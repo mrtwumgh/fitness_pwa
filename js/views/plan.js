@@ -1,6 +1,6 @@
 // The Plan tab: every level with its exercises and form cues.
 
-import { EXERCISES, LEVELS } from '../data.js';
+import { EXERCISES, LEVELS, DEMO_GIF_CREDIT } from '../data.js';
 import { planItems, dose, minutes } from '../plan.js';
 
 export function planView() {
@@ -19,5 +19,11 @@ export function planView() {
     return `<details class="card"><summary>Level ${i + 1}, about ${minutes(items)} min</summary>${rows}</details>`;
   }).join('');
 
-  return intro + levels;
+  // Credit everyone whose demo appears in the app.
+  const videoSources = [...new Set(Object.values(EXERCISES).filter(ex => ex.video).map(ex => ex.video.by.split(' (')[0]))];
+  const credits = `<p class="note">Exercise demos: ${DEMO_GIF_CREDIT}. Videos from YouTube by ${listOf(videoSources)}.</p>`;
+
+  return intro + levels + credits;
 }
+
+const listOf = names => names.length < 2 ? names.join('') : `${names.slice(0, -1).join(', ')} and ${names.at(-1)}`;

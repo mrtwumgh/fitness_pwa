@@ -1,6 +1,6 @@
 // The Today tab: streak, level prompt, warm-up, exercises, cool-down, effort rating and water.
 
-import { EXERCISES, WARMUP, COOLDOWN, FEELINGS } from '../data.js';
+import { EXERCISES, WARMUP, COOLDOWN, FEELINGS, DEMO_GIF_URL, VIDEO_THUMB_URL } from '../data.js';
 import { st, readLog } from '../state.js';
 import { todaysItems, dose, minutes, streak, levelReview, youtubeSearch } from '../plan.js';
 import { dateKey, isTrainingDay } from '../util.js';
@@ -49,17 +49,49 @@ function exerciseCard(item, log) {
   const holdButton = ex.unit === 'seconds'
     ? `<button type="button" class="btn" data-action="hold" data-id="${item.planned}">Start ${item.amount}s timer</button>`
     : '';
+  // With an animation on the card, the video (if any) is a link; without one, the video is the demo.
+  const videoLink = ex.gif && ex.video
+    ? `<button type="button" class="link" data-action="video" data-exercise="${item.id}">Watch video</button>`
+    : '';
   return `<section class="card${doneSets >= item.sets ? ' ok' : ''}">
     <h2>${ex.name}</h2>
     ${item.easier ? `<p class="sub">Easier version of ${EXERCISES[item.planned].name.toLowerCase()} today</p>` : ''}
     <p class="dose">${dose(item)}</p>
+    ${demo(item.id)}
     <p class="cue">${ex.cue}</p>
     <div class="row">${chips}${holdButton}</div>
     <div class="links">
-      <a href="${youtubeSearch(item.id)}" target="_blank" rel="noopener">Watch how</a>
+      ${videoLink}
       <button type="button" class="link" data-action="easier" data-id="${item.planned}">${item.easier ? 'Back to normal' : 'Too hard today'}</button>
     </div>
   </section>`;
+}
+
+/**
+ * The exercise demo: a looping animation if there is one, otherwise a tap-to-play video.
+ * If an animation can't load (e.g. offline before it was ever saved), main.js removes it;
+ * the card's "Watch video" link remains, or for animation-only exercises a YouTube search link appears.
+ */
+function demo(id) {
+  const ex = EXERCISES[id];
+  if (!ex.gif) return videoButton(id);
+  const fallback = ex.video ? ''
+    : `<a class="demo-fallback" href="${youtubeSearch(id)}" target="_blank" rel="noopener" hidden>Animation unavailable. Find a video on YouTube</a>`;
+  return `<figure class="demo">
+      <img class="demo-gif" src="${DEMO_GIF_URL(ex.gif)}" alt="Animation of ${ex.name.toLowerCase()}" width="180" height="180" loading="lazy">
+      <figcaption>${ex.gifNote ? `<span class="demo-note">${ex.gifNote}</span>` : ''}<span class="credit">© Gym visual</span></figcaption>
+      ${fallback}
+    </figure>`;
+}
+
+function videoButton(id) {
+  const ex = EXERCISES[id];
+  const source = ex.video.by.split(' (')[0];   // "Physio REHAB (Tim Keeley, …)" -> "Physio REHAB"
+  return `<button type="button" class="demo-video" data-action="video" data-exercise="${id}" aria-label="Play video: ${ex.name}">
+      <img class="demo-thumb" src="${VIDEO_THUMB_URL(ex.video.id)}" alt="" loading="lazy">
+      <span class="play" aria-hidden="true"></span>
+      <span class="label">Watch demo · ${source}</span>
+    </button>`;
 }
 
 function routineCard(id, title, steps, log) {
