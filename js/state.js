@@ -1,7 +1,8 @@
 // Everything the app remembers, saved in the browser's localStorage.
 // `st` is the single shared state object; call save() after changing it.
 
-import { dateKey } from './util.js';
+import { MAX_LEVEL } from './data.js';
+import { clamp, dateKey } from './util.js';
 
 const STORAGE_KEY = 'ss';
 
@@ -63,6 +64,7 @@ function load() {
     reminders: { ...DEFAULTS.reminders, ...withoutUndefined(saved.reminders || {}) },
     version: 2,
   };
+  state.level = clamp(Math.round(state.level) || 1, 1, MAX_LEVEL);   // levelling up used to have no limit
   if (!state.deviceId) state.deviceId = randomId();
   return state;
 }

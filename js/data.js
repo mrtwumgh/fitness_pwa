@@ -6,6 +6,7 @@
  *   unit:    'reps' or 'seconds' (seconds get a hold timer)
  *   per:     extra label after the dose, e.g. 'per side'
  *   neck:    true = only on neck days (Mon, Wed, Fri)
+ *   holds:   for timed exercises done in several positions, each position; the timer runs them in turn
  *   gif:     ExerciseDB animation id, shown on the card (see DEMO_GIF_URL)
  *   gifNote: shown under the animation when it differs from how we do it
  *   video:   { id, by } — YouTube video played inside the app
@@ -101,6 +102,7 @@ export const EXERCISES = {
   },
   neckIsometrics: {
     name: 'Neck isometrics', unit: 'seconds', per: 'per direction', neck: true,
+    holds: ['Forehead', 'Left side', 'Right side', 'Back of head'],
     search: 'neck isometric exercises physiotherapist',
     video: { id: 'j9Gy2HFo7W0', by: 'Physio REHAB (Tim Keeley, physiotherapist)' },
     cue: 'Sit tall. Press your palm against your forehead, then each side of your head, then the back of your head. Your head must not move. Push gently and hold. One round = all 4 directions. Go gently, never jerk, stop if you feel pain or dizziness.',
@@ -119,10 +121,13 @@ export const VIDEO_EMBED_URL = id =>
   `https://www.youtube-nocookie.com/embed/${id}?autoplay=1&playsinline=1&rel=0&modestbranding=1`;
 export const VIDEO_THUMB_URL = id => `https://i.ytimg.com/vi/${id}/hqdefault.jpg`;
 
-/**
- * Levels 1 to 6. Each entry is [exercise, sets, reps or seconds].
- * Levels 7 and up are generated from level 6 (see levelPlan in plan.js).
- */
+/** The channel name without the note in brackets: "Physio REHAB (Tim Keeley, …)" -> "Physio REHAB". */
+export const videoChannel = video => video.by.split(' (')[0];
+
+/** The highest level. Levels 7 to MAX_LEVEL are generated from level 6 (see levelPlan in plan.js). */
+export const MAX_LEVEL = 12;
+
+/** Levels 1 to 6. Each entry is [exercise, sets, reps or seconds]. */
 export const LEVELS = [
   [['wallPushUp', 1, 8], ['chairSquat', 1, 8], ['neckIsometrics', 1, 5]],
   [['wallPushUp', 2, 8], ['chairSquat', 2, 8], ['plank', 1, 10], ['gluteBridge', 1, 8], ['neckIsometrics', 2, 5]],

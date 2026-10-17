@@ -1,8 +1,9 @@
 // The Today tab: streak, level prompt, warm-up, exercises, cool-down, effort rating and water.
 
-import { EXERCISES, WARMUP, COOLDOWN, FEELINGS, DEMO_GIF_URL, VIDEO_THUMB_URL } from '../data.js';
+import { EXERCISES, WARMUP, COOLDOWN, FEELINGS, DEMO_GIF_URL, VIDEO_THUMB_URL, videoChannel } from '../data.js';
 import { st, readLog } from '../state.js';
 import { todaysItems, dose, minutes, streak, levelReview, youtubeSearch } from '../plan.js';
+import { imageFailed } from '../media.js';
 import { dateKey, isTrainingDay } from '../util.js';
 
 export function todayView(now = new Date()) {
@@ -33,7 +34,7 @@ function levelPrompt(now) {
     + (review.hard ? ` and ${review.hard} of them felt hard.` : '.');
   if (review.kind === 'up') {
     return `<section class="card"><h2>Ready to level up?</h2><p class="cue">${summary}</p>
-      <div class="row">${levelButton('up', 'Level up')}${levelButton('stay', 'Stay')}${levelButton('down', 'Go easier')}</div></section>`;
+      <div class="row">${levelButton('up', 'Level up')}${levelButton('stay', 'Stay')}${st.level > 1 ? levelButton('down', 'Go easier') : ''}</div></section>`;
   }
   return `<section class="card"><h2>This level has felt hard</h2><p class="cue">${summary} Dropping a level is how you keep progressing.</p>
     <div class="row">${levelButton('down', 'Go easier')}${levelButton('stay', 'Stay')}</div></section>`;
@@ -45,9 +46,9 @@ function exerciseCard(item, log) {
   const ex = EXERCISES[item.id];
   const doneSets = log.sets[item.planned] || 0;
   const chips = Array.from({ length: item.sets }, (_, i) =>
-    `<button type="button" class="chip${i < doneSets ? ' on' : ''}" data-action="set" data-id="${item.planned}" data-index="${i}" aria-label="Set ${i + 1}">${i + 1}</button>`).join('');
+    `<button type="button" class="chip${i < doneSets ? ' on' : ''}" data-action="set" data-id="${item.planned}" data-index="${i}" aria-label="Set ${i + 1}" aria-pressed="${i < doneSets}">${i + 1}</button>`).join('');
   const holdButton = ex.unit === 'seconds'
-    ? `<button type="button" class="btn" data-action="hold" data-id="${item.planned}">Start ${item.amount}s timer</button>`
+    ? `<button type="button" class="btn" data-action="hold" data-id="${item.planned}">Start ${ex.holds ? `${ex.holds.length} × ` : ''}${item.amount}s timer</button>`
     : '';
   // With an animation on the card, the video (if any) is a link; without one, the video is the demo.
   const videoLink = ex.gif && ex.video
@@ -69,16 +70,19 @@ function exerciseCard(item, log) {
 
 /**
  * The exercise demo: a looping animation if there is one, otherwise a tap-to-play video.
- * If an animation can't load (e.g. offline before it was ever saved), main.js removes it;
+ * If an animation can't load (e.g. offline before it was ever saved), media.js removes it;
  * the card's "Watch video" link remains, or for animation-only exercises a YouTube search link appears.
  */
 function demo(id) {
   const ex = EXERCISES[id];
   if (!ex.gif) return videoButton(id);
+  const src = DEMO_GIF_URL(ex.gif);
+  const failed = imageFailed(src);
   const fallback = ex.video ? ''
-    : `<a class="demo-fallback" href="${youtubeSearch(id)}" target="_blank" rel="noopener" hidden>Animation unavailable. Find a video on YouTube</a>`;
+    : `<a class="demo-fallback" href="${youtubeSearch(id)}" target="_blank" rel="noopener"${failed ? '' : ' hidden'}>Animation unavailable. Find a video on YouTube</a>`;
+  if (failed) return fallback && `<figure class="demo">${fallback}</figure>`;
   return `<figure class="demo">
-      <img class="demo-gif" src="${DEMO_GIF_URL(ex.gif)}" alt="Animation of ${ex.name.toLowerCase()}" width="180" height="180" loading="lazy">
+      <img class="demo-gif" src="${src}" alt="Animation of ${ex.name.toLowerCase()}" width="180" height="180" loading="lazy">
       <figcaption>${ex.gifNote ? `<span class="demo-note">${ex.gifNote}</span>` : ''}<span class="credit">© Gym visual</span></figcaption>
       ${fallback}
     </figure>`;
@@ -86,11 +90,11 @@ function demo(id) {
 
 function videoButton(id) {
   const ex = EXERCISES[id];
-  const source = ex.video.by.split(' (')[0];   // "Physio REHAB (Tim Keeley, …)" -> "Physio REHAB"
+  const thumb = VIDEO_THUMB_URL(ex.video.id);
   return `<button type="button" class="demo-video" data-action="video" data-exercise="${id}" aria-label="Play video: ${ex.name}">
-      <img class="demo-thumb" src="${VIDEO_THUMB_URL(ex.video.id)}" alt="" loading="lazy">
+      ${imageFailed(thumb) ? '' : `<img class="demo-thumb" src="${thumb}" alt="" loading="lazy">`}
       <span class="play" aria-hidden="true"></span>
-      <span class="label">Watch demo · ${source}</span>
+      <span class="label">Watch demo · ${videoChannel(ex.video)}</span>
     </button>`;
 }
 

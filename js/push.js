@@ -3,19 +3,15 @@
 // Flow: the browser gives us a push subscription -> we POST it with the schedule to the worker's /sync ->
 // the worker's 5-minute cron sends due reminders -> sw.js shows them.
 
-import { PUSH_URL, VAPID_PUBLIC } from "./config.js";
-import { st, save, readLog } from "./state.js";
-import { dateKey, pad, WEEKDAYS } from "./util.js";
+import { PUSH_URL, VAPID_PUBLIC } from './config.js';
+import { st, save, readLog } from './state.js';
+import { dateKey, pad, TRAINING_DAYS } from './util.js';
 
 /** Last error message from the server, for showing to the user. */
-export let lastError = "";
+let lastError = '';
 
-const supported = () =>
-  "serviceWorker" in navigator &&
-  "PushManager" in window &&
-  "Notification" in window;
-const configured = () =>
-  !PUSH_URL.includes("YOUR-") && !VAPID_PUBLIC.startsWith("PASTE");
+const supported = () => 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
+const configured = () => !PUSH_URL.includes('YOUR-') && !VAPID_PUBLIC.startsWith('PASTE');
 
 /** The reminder schedule in the worker's format. */
 export function buildReminders() {
@@ -23,40 +19,22 @@ export function buildReminders() {
   const list = [];
   if (r.water) {
     const times = [];
-    for (
-      let h = +r.waterFrom;
-      h <= +r.waterTo;
-      h += Math.max(1, +r.waterEvery || 2)
-    )
-      times.push(`${pad(h)}:00`);
-    list.push({
-      tag: "water",
-      title: "Drink water",
-      body: "Have a glass of water now.",
-      days: [0, 1, 2, 3, 4, 5, 6],
-      times,
-    });
+    for (let h = +r.waterFrom; h <= +r.waterTo; h += Math.max(1, +r.waterEvery || 2)) times.push(`${pad(h)}:00`);
+    if (times.length) {   // none if "from" is after "to"
+      list.push({ tag: 'water', title: 'Drink water', body: 'Have a glass of water now.', days: [0, 1, 2, 3, 4, 5, 6], times });
+    }
   }
   if (r.workout) {
-    list.push({
-      tag: "workout",
-      title: "Time to train",
-      body: "Your session is short. Start now.",
-      days: WEEKDAYS,
-      times: [r.workoutTime],
-    });
+    list.push({ tag: 'workout', title: 'Time to train', body: 'Your session is short. Start now.', days: TRAINING_DAYS, times: [r.workoutTime] });
   }
   // The nudge shares the "workout" tag, so marking the day complete cancels it too.
   if (r.nudge) {
-    const [h, m] = r.workoutTime.split(":");
+    const [h, m] = r.workoutTime.split(':');
     const hour = +h + Math.max(1, +r.nudgeAfter || 3);
     if (hour < 24) {
       list.push({
-        tag: "workout",
-        title: "Still time to train",
-        body: "A few minutes counts. Mark today complete when you finish.",
-        days: WEEKDAYS,
-        times: [`${pad(hour)}:${m}`],
+        tag: 'workout', title: 'Still time to train', body: 'A few minutes counts. Mark today complete when you finish.',
+        days: TRAINING_DAYS, times: [`${pad(hour)}:${m}`],
       });
     }
   }
@@ -67,24 +45,20 @@ export function buildReminders() {
 function doneToday() {
   const today = dateKey();
   const tags = [];
-  if ((st.water[today] || 0) >= st.waterGoal) tags.push("water");
-  if (readLog(today).done) tags.push("workout");
+  if ((st.water[today] || 0) >= st.waterGoal) tags.push('water');
+  if (readLog(today).done) tags.push('workout');
   return tags.length ? { date: today, tags } : null;
 }
 
 async function post(path, data) {
   const res = await fetch(PUSH_URL + path, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ id: st.deviceId, ...data }),
   });
   if (!res.ok) {
-    let message = "";
-    try {
-      message = (await res.json()).error;
-    } catch {
-      /* no JSON body */
-    }
+    let message = '';
+    try { message = (await res.json()).error; } catch { /* no JSON body */ }
     lastError = message || `The reminder server replied ${res.status}.`;
   }
   return res;
@@ -102,7 +76,7 @@ async function currentSubscription() {
  */
 export async function syncReminders(force = false) {
   if (!st.pushOn) return false;
-  lastError = "";
+  lastError = '';
   try {
     const sub = await currentSubscription();
     if (!sub) {
@@ -118,13 +92,13 @@ export async function syncReminders(force = false) {
     };
     const fingerprint = JSON.stringify(data);
     if (!force && fingerprint === st.pushSent) return true;
-    const res = await post("/sync", data);
+    const res = await post('/sync', data);
     if (!res.ok) return false;
     st.pushSent = fingerprint;
     save();
     return true;
   } catch {
-    lastError = "Could not reach the reminder server. Check your connection.";
+    lastError = 'Could not reach the reminder server. Check your connection.';
     return false;
   }
 }
@@ -132,19 +106,14 @@ export async function syncReminders(force = false) {
 // The functions below return a message to show the user.
 
 export async function turnOnReminders() {
-  if (!supported())
-    return "This browser cannot receive reminders. Use Chrome on Android, ideally with the app installed.";
-  if (!configured())
-    return "Reminders are not set up yet: add PUSH_URL and VAPID_PUBLIC in js/config.js.";
-  if ((await Notification.requestPermission()) !== "granted") {
-    return "Notifications are blocked. Allow them for this app in Android settings, then try again.";
+  if (!supported()) return 'This browser cannot receive reminders. Use Chrome on Android, ideally with the app installed.';
+  if (!configured()) return 'Reminders are not set up yet: add PUSH_URL and VAPID_PUBLIC in js/config.js.';
+  if ((await Notification.requestPermission()) !== 'granted') {
+    return 'Notifications are blocked. Allow them for this app in Android settings, then try again.';
   }
   try {
     const reg = await navigator.serviceWorker.ready;
-    const options = {
-      userVisibleOnly: true,
-      applicationServerKey: keyBytes(VAPID_PUBLIC),
-    };
+    const options = { userVisibleOnly: true, applicationServerKey: keyBytes(VAPID_PUBLIC) };
     let sub = await reg.pushManager.getSubscription();
     try {
       sub ||= await reg.pushManager.subscribe(options);
@@ -155,12 +124,12 @@ export async function turnOnReminders() {
     }
     st.pushOn = true;
     save();
-    if (await syncReminders(true)) return "Reminders are on.";
+    if (await syncReminders(true)) return 'Reminders are on.';
     st.pushOn = false;
     save();
-    return lastError || "Could not reach the reminder server.";
+    return lastError || 'Could not reach the reminder server.';
   } catch (e) {
-    return "Could not turn on reminders: " + e.message;
+    return 'Could not turn on reminders: ' + e.message;
   }
 }
 
@@ -168,24 +137,21 @@ export async function turnOffReminders() {
   try {
     const sub = await currentSubscription();
     if (sub) await sub.unsubscribe();
-    await post("/remove", {});
-  } catch {
-    /* offline: the server drops the subscription once pushes start failing */
-  }
+    await post('/remove', {});
+  } catch { /* offline: the server drops the subscription once pushes start failing */ }
   st.pushOn = false;
-  st.pushSent = "";
+  st.pushSent = '';
   save();
-  return "Reminders are off.";
+  return 'Reminders are off.';
 }
 
 export async function sendTest() {
-  if (!(await syncReminders()))
-    return lastError || "Could not reach the reminder server.";
+  if (!(await syncReminders())) return lastError || 'Could not reach the reminder server.';
   try {
-    const res = await post("/test", {});
-    return res.ok ? "Test sent. It should arrive in a few seconds." : lastError;
+    const res = await post('/test', {});
+    return res.ok ? 'Test sent. It should arrive in a few seconds.' : lastError;
   } catch {
-    return "Could not reach the reminder server.";
+    return 'Could not reach the reminder server.';
   }
 }
 
@@ -195,21 +161,16 @@ export async function sendTest() {
  * and explains clearly if what's left isn't a valid public key (65 bytes starting with 0x04).
  */
 export function keyBytes(key) {
-  const clean = String(key).replace(/[^A-Za-z0-9_\-+/]/g, "");
-  const b64 = clean.replace(/-/g, "+").replace(/_/g, "/");
+  const clean = String(key).replace(/[^A-Za-z0-9_\-+/]/g, '');
+  const b64 = clean.replace(/-/g, '+').replace(/_/g, '/');
   let bytes = null;
   try {
-    bytes = Uint8Array.from(
-      atob(b64 + "=".repeat((4 - (b64.length % 4)) % 4)),
-      (c) => c.charCodeAt(0),
-    );
-  } catch {
-    /* reported below */
-  }
+    bytes = Uint8Array.from(atob(b64 + '='.repeat((4 - (b64.length % 4)) % 4)), c => c.charCodeAt(0));
+  } catch { /* reported below */ }
   if (!bytes || bytes.length !== 65 || bytes[0] !== 4) {
     throw new Error(
-      `VAPID_PUBLIC in js/config.js isn't a valid public key: it has ${clean.length} characters, ` +
-        `starting "${clean.slice(0, 8)}" and ending "${clean.slice(-4)}". A public key has 87 characters and starts with "B".`,
+      `VAPID_PUBLIC in js/config.js isn't a valid public key: it has ${clean.length} characters, `
+      + `starting "${clean.slice(0, 8)}" and ending "${clean.slice(-4)}". A public key has 87 characters and starts with "B".`,
     );
   }
   return bytes;
