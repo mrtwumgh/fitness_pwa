@@ -1,7 +1,7 @@
 // Service worker: offline cache, update handover, and showing push reminders.
 // Bump CACHE whenever you change any file so phones pick up the new version.
 
-const CACHE = 'ss-v9';
+const CACHE = 'ss-v10';
 // Exercise animations, saved the first time each one is shown so they also work offline.
 // Kept across app updates: only change this name to force every animation to download again.
 // js/media.js uses this name too.

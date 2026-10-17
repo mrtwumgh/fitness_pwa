@@ -2,7 +2,7 @@
 
 import { test, beforeEach } from 'node:test';
 import assert from 'node:assert/strict';
-import { EXERCISES, EASIER, MAX_LEVEL } from '../js/data.js';
+import { EXERCISES, EASIER, MAX_LEVEL, GROWTH } from '../js/data.js';
 import { st } from '../js/state.js';
 import { levelPlan, planItems, todaysItems, minutes, streak, levelReview, changeLevel, setLevel } from '../js/plan.js';
 import { dateKey } from '../js/util.js';
@@ -32,13 +32,27 @@ test('every exercise used anywhere exists and has an animation or a video', () =
   for (const [id, ex] of Object.entries(EXERCISES)) assert.ok(ex.gif || ex.video, id);
 });
 
-test('levels above 6 grow from level 6, with at most 4 sets', () => {
+test('levels above 6 grow slowly from level 6, within the limits, and neck work stays the same', () => {
   const six = new Map(levelPlan(6).map(([id, sets, amount]) => [id, { sets, amount }]));
-  for (const [id, sets, amount] of levelPlan(8)) {
-    assert.equal(sets, Math.min(4, six.get(id).sets + 1));
-    assert.equal(amount, six.get(id).amount + (EXERCISES[id].unit === 'seconds' ? 10 : 4));
+  const eight = new Map(levelPlan(8).map(([id, sets, amount]) => [id, { sets, amount }]));
+  assert.deepEqual(eight.get('pushUp'), { sets: 3, amount: 10 });            // 3 × 8 at level 6
+  assert.deepEqual(eight.get('pikePushUp'), { sets: 3, amount: 8 });         // 2 × 6: gains a set
+  assert.deepEqual(eight.get('plank'), { sets: 3, amount: 40 });             // 3 × 30 sec
+  assert.deepEqual(eight.get('neckIsometrics'), six.get('neckIsometrics'));
+  assert.deepEqual(eight.get('chinTuck'), six.get('chinTuck'));
+  for (const [id, sets, amount] of levelPlan(MAX_LEVEL)) {
+    const ex = EXERCISES[id];
+    const max = ex.unit === 'seconds' ? GROWTH.maxSeconds : ex.per ? GROWTH.maxRepsPerSide : GROWTH.maxReps;
+    assert.ok(sets <= GROWTH.maxSets && amount <= Math.max(max, six.get(id).amount), id);
   }
-  assert.ok(levelPlan(MAX_LEVEL).every(([, sets]) => sets <= 4));
+});
+
+test('every level is harder than the one before, and the longest session is about an hour', () => {
+  for (let level = 2; level <= MAX_LEVEL; level++) {
+    const before = new Map(levelPlan(level - 1).map(([id, sets, amount]) => [id, sets * amount]));
+    assert.ok(levelPlan(level).some(([id, sets, amount]) => sets * amount > (before.get(id) ?? 0)), `level ${level}`);
+  }
+  assert.ok(minutes(planItems(levelPlan(MAX_LEVEL)), MAX_LEVEL) <= 65);
 });
 
 test('neck work only on Monday, Wednesday and Friday', () => {

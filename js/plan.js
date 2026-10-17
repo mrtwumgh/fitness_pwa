@@ -1,21 +1,27 @@
 // Training logic: what to do today, how long it takes, streaks and the level review.
 
-import { EXERCISES, LEVELS, EASIER, MAX_LEVEL } from './data.js';
+import { EXERCISES, LEVELS, EASIER, MAX_LEVEL, GROWTH } from './data.js';
 import { st, readLog } from './state.js';
 import { clamp, dateKey, isTrainingDay, isNeckDay } from './util.js';
 
 /** Rest between sets grows a little once sessions get longer. */
 export const restSeconds = (level = st.level) => (level >= 5 ? 45 : 30);
 
-/** A level's plan as [exercise, sets, amount]. Levels above 6 grow from level 6. */
+/** A level's plan as [exercise, sets, amount]. Levels above 6 grow from level 6 within the limits in GROWTH. */
 export function levelPlan(level) {
   if (level <= LEVELS.length) return LEVELS[level - 1];
   const extra = level - LEVELS.length;
-  return LEVELS.at(-1).map(([id, sets, amount]) => [
-    id,
-    Math.min(4, sets + Math.floor(extra / 2)),                       // one more set every second level, max 4
-    amount + (EXERCISES[id].unit === 'seconds' ? 5 : 2) * extra,     // +2 reps or +5 seconds per level
-  ]);
+  return LEVELS.at(-1).map(([id, sets, amount]) => {
+    const ex = EXERCISES[id];
+    if (ex.neck) return [id, sets, amount];
+    const seconds = ex.unit === 'seconds';
+    const max = seconds ? GROWTH.maxSeconds : ex.per ? GROWTH.maxRepsPerSide : GROWTH.maxReps;
+    return [
+      id,
+      Math.max(sets, Math.min(GROWTH.maxSets, sets + Math.floor(extra / 2))),   // one more set every second level
+      Math.max(amount, Math.min(max, amount + (seconds ? GROWTH.seconds : GROWTH.reps) * extra)),
+    ];
+  });
 }
 
 /** Turn a level plan into items: { id, sets, amount, planned, easier }. */

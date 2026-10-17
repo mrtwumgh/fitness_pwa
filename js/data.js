@@ -124,8 +124,19 @@ export const VIDEO_THUMB_URL = id => `https://i.ytimg.com/vi/${id}/hqdefault.jpg
 /** The channel name without the note in brackets: "Physio REHAB (Tim Keeley, …)" -> "Physio REHAB". */
 export const videoChannel = video => video.by.split(' (')[0];
 
-/** The highest level. Levels 7 to MAX_LEVEL are generated from level 6 (see levelPlan in plan.js). */
+/** The highest level. Levels 7 to MAX_LEVEL are generated from level 6 using GROWTH. */
 export const MAX_LEVEL = 12;
+
+/**
+ * How levels 7 to MAX_LEVEL grow from level 6 (see levelPlan in plan.js): each level adds `reps`
+ * or `seconds`, and every second level adds a set, up to the limits below. The limits keep the longest
+ * session to about an hour. Neck work stays at its level 6 dose.
+ *   maxRepsPerSide: for exercises done on each side (those with a `per` label)
+ */
+export const GROWTH = {
+  reps: 1, seconds: 5,
+  maxSets: 3, maxReps: 20, maxRepsPerSide: 12, maxSeconds: 60,
+};
 
 /** Levels 1 to 6. Each entry is [exercise, sets, reps or seconds]. */
 export const LEVELS = [
