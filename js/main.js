@@ -2,26 +2,39 @@
 
 import { EXERCISES, WARMUP, COOLDOWN } from './data.js';
 import { st, save, logFor, resetAll } from './state.js';
-import { todaysItems, restSeconds, changeLevel } from './plan.js';
-import { startTimer, skipTimer, resumeWakeLock } from './timer.js';
+import { todaysItems, restSeconds, changeLevel, setLevel } from './plan.js';
+import { startTimer, runSteps, skipTimer, resumeWakeLock } from './timer.js';
 import { syncReminders, turnOnReminders, turnOffReminders, sendTest } from './push.js';
 import { openVideo, closeVideo } from './video.js';
 import { toast } from './toast.js';
-import { $, dateKey } from './util.js';
+import { $, clamp, dateKey } from './util.js';
 import { todayView } from './views/today.js';
 import { planView } from './views/plan.js';
 import { settingsView } from './views/settings.js';
+import './media.js';
 
 let tab = 'today';
 let storageProtected = null;
 
+/** Redraw the current tab. Keyboard focus stays on the same control (matched by its data- attributes). */
 function render() {
-  $('#app').innerHTML =
+  const app = $('#app');
+  const active = document.activeElement?.closest('#app [data-action], #app [data-field]');
+  const focused = active && controlKey(active);
+  app.innerHTML =
     tab === 'today' ? todayView()
     : tab === 'plan' ? planView()
     : settingsView({ storageProtected });
-  document.querySelectorAll('nav button').forEach(b => b.classList.toggle('on', b.dataset.tab === tab));
+  if (focused) [...app.querySelectorAll('[data-action], [data-field]')].find(el => controlKey(el) === focused)?.focus({ preventScroll: true });
+  document.querySelectorAll('nav button').forEach(b => {
+    const on = b.dataset.tab === tab;
+    b.classList.toggle('on', on);
+    if (on) b.setAttribute('aria-current', 'page');
+    else b.removeAttribute('aria-current');
+  });
 }
+
+const controlKey = el => JSON.stringify(el.dataset);
 
 /** Save, redraw, and let the reminder server know if anything it cares about changed. */
 function commit() {
@@ -29,6 +42,9 @@ function commit() {
   render();
   syncReminders();
 }
+
+/** Today's item for a planned exercise; undefined if the page is out of date (e.g. left open past midnight). */
+const todaysItem = planned => todaysItems().find(i => i.planned === planned);
 
 // ---------- taps ----------
 
@@ -60,8 +76,9 @@ document.addEventListener('click', event => {
 
     case 'set': {
       // Tapping set N marks sets 1..N done; tapping the last done set again undoes it.
+      const item = todaysItem(id);
+      if (!item) break;   // out of date: just redraw
       const log = logFor();
-      const item = todaysItems().find(i => i.planned === id);
       const before = log.sets[id] || 0;
       const index = +button.dataset.index;
       log.sets[id] = index < before ? index : index + 1;
@@ -69,16 +86,9 @@ document.addEventListener('click', event => {
       break;
     }
 
-    case 'hold': {
-      const item = todaysItems().find(i => i.planned === id);
-      startTimer(EXERCISES[item.id].name, item.amount, () => {
-        const log = logFor();
-        const sets = todaysItems().find(i => i.planned === id).sets;
-        log.sets[id] = Math.min(sets, (log.sets[id] || 0) + 1);
-        commit();
-      });
+    case 'hold':
+      startHold(id);
       return;
-    }
 
     case 'easier': {
       const log = logFor();
@@ -139,73 +149,69 @@ document.addEventListener('click', event => {
   commit();
 });
 
+/**
+ * One timed set: 5 seconds to get into position, then the hold (each position in turn for neck work).
+ * When it finishes the set is ticked off and, if more sets remain, the rest timer starts.
+ * Stopping part-way doesn't count the set.
+ */
+function startHold(planned) {
+  const item = todaysItem(planned);
+  if (!item) { render(); return; }
+  const ex = EXERCISES[item.id];
+  const holds = ex.holds
+    ? ex.holds.map((position, i) => ({ label: `${i + 1}/${ex.holds.length} ${position}`, seconds: item.amount }))
+    : [{ label: ex.name, seconds: item.amount }];
+  const steps = [
+    { label: 'Get ready', seconds: 5, button: 'Start now' },
+    ...holds.map(hold => ({ ...hold, button: 'Stop', advance: false })),
+  ];
+  runSteps(steps, () => {
+    const sets = todaysItem(planned)?.sets ?? item.sets;   // "Too hard today" may have changed the dose meanwhile
+    const log = logFor();
+    log.sets[planned] = Math.min(sets, (log.sets[planned] || 0) + 1);
+    if (log.sets[planned] < sets) startTimer('Rest', restSeconds());
+    commit();
+  });
+}
+
 function runRoutine(id, steps) {
-  let step = 0;
-  const next = () => {
-    if (step >= steps.length) {
-      logFor()[id] = true;
-      commit();
-      return;
-    }
-    const { name, seconds } = steps[step++];
-    startTimer(`${step}/${steps.length} ${name}`, seconds, next, true);
-  };
-  next();
+  runSteps(steps.map(({ name, seconds }, i) => ({ label: `${i + 1}/${steps.length} ${name}`, seconds })), () => {
+    logFor()[id] = true;
+    commit();
+  });
 }
 
 // ---------- settings ----------
 
+/** Settings kept in st.reminders; the others (waterGoal, sound) are kept on st itself. */
 const REMINDER_FIELDS = ['water', 'waterEvery', 'waterFrom', 'waterTo', 'workout', 'workoutTime', 'nudge', 'nudgeAfter'];
 
 document.addEventListener('change', event => {
   const input = event.target;
   const field = input.dataset.field;
   if (!field) return;
-  const value = input.type === 'checkbox' ? input.checked
-    : input.type === 'number' || field === 'level' ? Number(input.value)
-    : input.value;
 
-  if (REMINDER_FIELDS.includes(field)) {
-    st.reminders[field] = value;
-  } else if (field === 'level') {
-    st.level = value;
-    st.levelStart = dateKey();
-  } else if (field === 'waterGoal') {
-    st.waterGoal = Math.max(1, value || 8);
-  } else if (field === 'sound') {
-    st.sound = value;
+  if (field === 'level') {
+    setLevel(Number(input.value));
+  } else {
+    const target = REMINDER_FIELDS.includes(field) ? st.reminders : st;
+    target[field] = inputValue(input, target[field]);
+    if (input.type !== 'checkbox') input.value = target[field];   // show any correction
   }
   save();
   if (field === 'level' || field === 'waterGoal') render();
   syncReminders();
 });
 
-// ---------- demo images that fail to load ----------
-// Image errors don't bubble, so listen in the capture phase.
-
-/** Must match MEDIA_CACHE in sw.js. */
-const MEDIA_CACHE = 'ss-media-v1';
-
-document.addEventListener('error', event => {
-  const img = event.target;
-  if (!(img instanceof HTMLImageElement)) return;
-
-  if (img.classList.contains('demo-gif')) {
-    // Forget any saved copy so the next visit tries the network again.
-    if ('caches' in window) caches.open(MEDIA_CACHE).then(cache => cache.delete(img.src)).catch(() => {});
-    const figure = img.closest('.demo');
-    const fallback = figure?.querySelector('.demo-fallback');
-    if (fallback) {
-      img.remove();
-      figure.querySelector('figcaption')?.remove();
-      fallback.hidden = false;
-    } else {
-      figure?.remove();   // the card's "Watch video" link is still there
-    }
-  } else if (img.classList.contains('demo-thumb')) {
-    img.remove();   // the play button still works on a plain background
+/** An input's value, falling back to the saved one if it was cleared, and kept within the input's min and max. */
+function inputValue(input, saved) {
+  if (input.type === 'checkbox') return input.checked;
+  if (input.type === 'number') {
+    const n = Math.round(input.valueAsNumber);
+    return Number.isNaN(n) ? saved : clamp(n, Number(input.min || -Infinity), Number(input.max || Infinity));
   }
-}, true);
+  return input.value || saved;
+}
 
 // ---------- coming back to the app ----------
 

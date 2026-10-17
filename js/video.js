@@ -8,6 +8,7 @@ import { toast } from './toast.js';
 import { $ } from './util.js';
 
 let open = false;
+let opener = null;   // the control that opened the player; focus returns to it on close
 
 export function openVideo(exerciseId) {
   const ex = EXERCISES[exerciseId];
@@ -32,7 +33,10 @@ export function openVideo(exerciseId) {
 
   player.hidden = false;
   document.body.classList.add('no-scroll');
-  if (!open) history.pushState({ video: true }, '');
+  if (!open) {
+    opener = document.activeElement;
+    history.pushState({ video: true }, '');
+  }
   open = true;
   player.querySelector('[data-action="close-video"]').focus();
 }
@@ -50,6 +54,8 @@ function hidePlayer() {
   player.hidden = true;
   document.body.classList.remove('no-scroll');
   open = false;
+  opener?.focus({ preventScroll: true });
+  opener = null;
 }
 
 // Back button (or history.back() above) while the player is open.

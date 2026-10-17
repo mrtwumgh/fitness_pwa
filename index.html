@@ -4,8 +4,10 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#15171c">
+  <meta name="description" content="A short home strength program for beginners, with timers, water tracking and reminders.">
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" href="icon-192.png">
+  <link rel="apple-touch-icon" href="icon-192.png">
   <link rel="stylesheet" href="style.css">
   <title>Strength Start</title>
 </head>
@@ -18,9 +20,13 @@
   <main id="app"></main>
 
   <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
-  <div id="timer" class="timer" hidden></div>
+  <div id="timer" class="timer" role="timer" hidden>
+    <span class="timer-label"></span>
+    <b class="timer-left"></b>
+    <button type="button" data-action="skip"></button>
+  </div>
 
-  <nav>
+  <nav aria-label="Sections">
     <button type="button" data-action="tab" data-tab="today">Today</button>
     <button type="button" data-action="tab" data-tab="plan">Plan</button>
     <button type="button" data-action="tab" data-tab="settings">Settings</button>

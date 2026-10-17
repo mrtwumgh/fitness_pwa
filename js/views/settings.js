@@ -1,5 +1,6 @@
 // The Settings tab. Inputs carry data-field="<name>"; main.js saves them on change.
 
+import { MAX_LEVEL } from '../data.js';
 import { st } from '../state.js';
 
 const checked = on => (on ? 'checked' : '');
@@ -7,7 +8,7 @@ const checked = on => (on ? 'checked' : '');
 /** storageProtected: true, false, or null if unknown. */
 export function settingsView({ storageProtected }) {
   const r = st.reminders;
-  const levels = Array.from({ length: 12 }, (_, i) =>
+  const levels = Array.from({ length: MAX_LEVEL }, (_, i) =>
     `<option value="${i + 1}"${i + 1 === st.level ? ' selected' : ''}>Level ${i + 1}</option>`).join('');
 
   const storageNote = storageProtected === null ? ''
