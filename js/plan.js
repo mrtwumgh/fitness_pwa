@@ -4,8 +4,15 @@ import { EXERCISES, LEVELS, EASIER, MAX_LEVEL, GROWTH } from './data.js';
 import { st, readLog } from './state.js';
 import { clamp, dateKey, isTrainingDay, isNeckDay } from './util.js';
 
-/** Rest between sets grows a little once sessions get longer. */
-export const restSeconds = (level = st.level) => (level >= 5 ? 45 : 30);
+/** Rest between sets, by level: 30 s at levels 1–2, 45 s at level 3, 60 s from level 4. */
+export const restSeconds = (level = st.level) => (level <= 2 ? 30 : level === 3 ? 45 : 60);
+
+/** Rest after a set of this item: the exercise's own `rest` if it has one, otherwise the level's. */
+export const restFor = (item, level = st.level) => EXERCISES[item.id].rest ?? restSeconds(level);
+
+/** The countdown between exercises, and between the warm-up and the first exercise. */
+export const TRANSITION_SECONDS = 75;
+export const WARMUP_TRANSITION_SECONDS = 30;
 
 /** A level's plan as [exercise, sets, amount]. Levels above 6 grow from level 6 within the limits in GROWTH. */
 export function levelPlan(level) {
@@ -58,14 +65,28 @@ export function dose(item) {
   return `${item.sets} × ${item.amount}${ex.unit === 'seconds' ? ' sec' : ''}${ex.per ? ' ' + ex.per : ''}`;
 }
 
-/** Rough session length: ~3 s per rep, every hold position timed, plus rest between sets. */
+/**
+ * Rough session length: ~3 s per rep, every hold position timed, rest between sets and the countdown
+ * between exercises. The optional warm-up and cool-down aren't included.
+ */
 export function minutes(items, level = st.level) {
   const total = items.reduce((sum, item) => {
     const ex = EXERCISES[item.id];
     const work = ex.unit === 'seconds' ? item.amount * (ex.holds?.length || 1) : item.amount * 3;
-    return sum + item.sets * (work + restSeconds(level));
-  }, 0);
+    return sum + item.sets * work + (item.sets - 1) * restFor(item, level);
+  }, 0) + Math.max(0, items.length - 1) * TRANSITION_SECONDS;
   return Math.round(total / 60) || 1;
+}
+
+/**
+ * The exercise to do after `after` (a planned id; leave it out for the first exercise): the next unfinished
+ * one in today's order, or if none is left after it, the first unfinished one before it.
+ * Undefined when every exercise is finished.
+ */
+export function nextExercise(items, log, after) {
+  const at = items.findIndex(item => item.planned === after);
+  const order = [...items.slice(at + 1), ...items.slice(0, Math.max(at, 0))];
+  return order.find(item => (log.sets[item.planned] || 0) < item.sets);
 }
 
 export function youtubeSearch(id) {

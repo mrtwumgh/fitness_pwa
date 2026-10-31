@@ -27,7 +27,8 @@ Service workers (offline use, reminders) only run on `http://localhost` or HTTPS
 | `js/state.js` | What the app remembers (localStorage) |
 | `js/main.js` | Entry point: draws the current tab and handles taps and settings |
 | `js/views/*.js` | The Today, Plan and Settings tabs |
-| `js/timer.js` | Countdown bar for rest, holds and routines |
+| `js/timer.js` | Countdown panel: rest between sets, the move to the next exercise, holds and routines |
+| `js/awake.js` | Keeps the screen on during a workout |
 | `js/video.js`, `js/media.js` | In-app video player; demo images that fail to load |
 | `js/push.js`, `js/config.js` | Reminder subscription and the reminder server's address |
 | `sw.js` | Service worker: offline cache, updates, showing reminders |

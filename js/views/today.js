@@ -54,7 +54,7 @@ function exerciseCard(item, log) {
   const videoLink = ex.gif && ex.video
     ? `<button type="button" class="link" data-action="video" data-exercise="${item.id}">Watch video</button>`
     : '';
-  return `<section class="card${doneSets >= item.sets ? ' ok' : ''}">
+  return `<section class="card${doneSets >= item.sets ? ' ok' : ''}" data-card="${item.planned}">
     <h2>${ex.name}</h2>
     ${item.easier ? `<p class="sub">Easier version of ${EXERCISES[item.planned].name.toLowerCase()} today</p>` : ''}
     <p class="dose">${dose(item)}</p>
@@ -98,10 +98,20 @@ function videoButton(id) {
     </button>`;
 }
 
+/** The "Up next" preview in the countdown between exercises: the animation (or video thumbnail), name and dose. */
+export function upNext(item) {
+  const ex = EXERCISES[item.id];
+  const gif = ex.gif && DEMO_GIF_URL(ex.gif);
+  const thumb = ex.video && VIDEO_THUMB_URL(ex.video.id);
+  const src = [gif, thumb].find(url => url && !imageFailed(url));
+  const img = src ? `<img class="${src === gif ? 'demo-gif' : 'demo-thumb'}" src="${src}" alt="" width="88" height="88">` : '';
+  return `${img}<div><b>${ex.name}</b><span class="dose">${dose(item)}</span></div>`;
+}
+
 function routineCard(id, title, steps, log) {
   const done = log[id];
   const mins = Math.round(steps.reduce((sum, s) => sum + s.seconds, 0) / 30) / 2;
-  return `<section class="card${done ? ' ok' : ''}">
+  return `<section class="card${done ? ' ok' : ''}" data-card="${id}">
     <h2>${title}</h2>
     <p class="dose">About ${mins} min, optional</p>
     <ol class="steps cue">${steps.map(s => `<li><b>${s.name}</b>, ${s.seconds}s. ${s.cue}</li>`).join('')}</ol>

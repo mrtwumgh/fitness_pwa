@@ -4,7 +4,9 @@ import { test, beforeEach } from 'node:test';
 import assert from 'node:assert/strict';
 import { EXERCISES, EASIER, MAX_LEVEL, GROWTH } from '../js/data.js';
 import { st } from '../js/state.js';
-import { levelPlan, planItems, todaysItems, minutes, streak, levelReview, changeLevel, setLevel } from '../js/plan.js';
+import {
+  levelPlan, planItems, todaysItems, minutes, restSeconds, restFor, nextExercise, streak, levelReview, changeLevel, setLevel,
+} from '../js/plan.js';
 import { dateKey } from '../js/util.js';
 
 // Monday 5 October 2026 to Friday 16 October 2026 are two training weeks.
@@ -47,12 +49,12 @@ test('levels above 6 grow slowly from level 6, within the limits, and neck work 
   }
 });
 
-test('every level is harder than the one before, and the longest session is about an hour', () => {
+test('every level is harder than the one before, and the longest session stays under 80 minutes', () => {
   for (let level = 2; level <= MAX_LEVEL; level++) {
     const before = new Map(levelPlan(level - 1).map(([id, sets, amount]) => [id, sets * amount]));
     assert.ok(levelPlan(level).some(([id, sets, amount]) => sets * amount > (before.get(id) ?? 0)), `level ${level}`);
   }
-  assert.ok(minutes(planItems(levelPlan(MAX_LEVEL)), MAX_LEVEL) <= 65);
+  assert.ok(minutes(planItems(levelPlan(MAX_LEVEL)), MAX_LEVEL) <= 80);
 });
 
 test('level 1 has a 2 × 15 s plank, and no level has sit-ups', () => {
@@ -60,6 +62,28 @@ test('level 1 has a 2 × 15 s plank, and no level has sit-ups', () => {
   for (let level = 1; level <= MAX_LEVEL; level++) {
     assert.ok(levelPlan(level).every(([id]) => !/sit.?up/i.test(id + EXERCISES[id].name)), `level ${level}`);
   }
+});
+
+test('rest between sets follows the level, unless the exercise sets its own', () => {
+  assert.deepEqual([1, 2, 3, 4, 5, 6, MAX_LEVEL].map(level => restSeconds(level)), [30, 30, 45, 60, 60, 60, 60]);
+  const [plank, neck, chinTuck] = planItems([['plank', 2, 15], ['neckIsometrics', 1, 5], ['chinTuck', 2, 5]]);
+  assert.equal(restFor(plank, 3), 45);
+  assert.equal(restFor(neck, 1), 60);
+  assert.equal(restFor(chinTuck, 1), 60);
+});
+
+test('the next exercise is the next unfinished one, wrapping round to any skipped earlier', () => {
+  const items = planItems([['wallPushUp', 2, 8], ['chairSquat', 2, 8], ['plank', 2, 15], ['gluteBridge', 1, 8]]);
+  const log = { sets: {} };
+  assert.equal(nextExercise(items, log)?.id, 'wallPushUp');                 // after the warm-up
+  log.sets = { wallPushUp: 2 };
+  assert.equal(nextExercise(items, log, 'wallPushUp')?.id, 'chairSquat');
+  log.sets = { wallPushUp: 2, plank: 2 };                                   // chair squat skipped
+  assert.equal(nextExercise(items, log, 'plank')?.id, 'gluteBridge');
+  log.sets = { wallPushUp: 2, plank: 2, gluteBridge: 1 };
+  assert.equal(nextExercise(items, log, 'gluteBridge')?.id, 'chairSquat');
+  log.sets = { wallPushUp: 2, chairSquat: 2, plank: 2, gluteBridge: 1 };
+  assert.equal(nextExercise(items, log, 'gluteBridge'), undefined);         // all done: straight to the cool-down
 });
 
 test('neck work only on Monday, Wednesday and Friday', () => {
@@ -79,13 +103,13 @@ test('"Too hard today" swaps to an easier exercise or lightens the dose', () => 
   assert.deepEqual([plank.id, plank.sets, plank.amount, plank.easier], ['plank', 2, 20, true]);
 });
 
-test('session length counts every neck direction and uses that level\'s rest time', () => {
-  const neck = planItems([['neckIsometrics', 1, 15]]);
-  assert.equal(minutes(neck, 1), 2);           // 4 × 15 s holds + 30 s rest = 90 s
+test('session length counts every neck direction, rest between sets and the move between exercises', () => {
+  assert.equal(minutes(planItems([['neckIsometrics', 2, 15]]), 1), 3);                  // 2 × 4 × 15 s + one 60 s rest
+  assert.equal(minutes(planItems([['squat', 2, 10], ['pushUp', 1, 10]]), 1), 3);        // 90 s work + 30 s rest + 75 s move
   st.level = 1;
   const six = planItems(levelPlan(6));
   assert.equal(minutes(six), minutes(six, 1)); // defaults to the current level
-  assert.ok(minutes(six, 6) > minutes(six, 1)); // level 6 rests 45 s between sets, not 30 s
+  assert.ok(minutes(six, 6) > minutes(six, 1)); // level 6 rests 60 s between sets, not 30 s
 });
 
 test('streak counts completed weekdays, skips weekends, and today only counts once done', () => {

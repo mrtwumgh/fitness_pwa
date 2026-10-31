@@ -26,7 +26,7 @@ document.addEventListener('error', event => {
       figure.querySelector('figcaption')?.remove();
       fallback.hidden = false;
     } else {
-      figure?.remove();   // the card's "Watch video" link is still there
+      (figure ?? img).remove();   // the card's "Watch video" link (or the "Up next" name) is still there
     }
   } else if (img.classList.contains('demo-thumb')) {
     failed.add(img.src);

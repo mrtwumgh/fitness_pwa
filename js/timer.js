@@ -1,27 +1,31 @@
-// The countdown bar at the bottom of the screen: rest timers, hold timers and guided routines.
-// While a timer runs it keeps the screen awake and beeps for the last 3 seconds.
+// The countdown panel at the bottom of the screen: rest between sets, the move to the next exercise,
+// hold timers and guided routines. It beeps for the last 3 seconds, then beeps and vibrates at the end.
 
-import { $ } from './util.js';
+import { $, pad } from './util.js';
 import { st } from './state.js';
+import { workoutActive } from './awake.js';
 
 let current = null;       // { label, endsAt, left, onEnd, button, advance }
 let intervalId = 0;
 let audio = null;
-let wakeLock = null;
-let releaseTimeout = 0;
 
 /**
  * Start a countdown, replacing any running one. `onEnd` runs when it reaches zero.
- *   button:  the bar's button label
+ *   button:  the main button's label
  *   advance: true = the button also runs `onEnd` (moves a sequence on); false = it just stops the timer
+ *   extend:  show a "+15s" button
+ *   next:    HTML for an "Up next" preview
  */
-export function startTimer(label, seconds, { onEnd, button = 'Skip', advance = false } = {}) {
+export function startTimer(label, seconds, { onEnd, button = 'Skip', advance = false, extend = false, next = '' } = {}) {
   unlockAudio();
+  workoutActive();
   clearInterval(intervalId);
   current = { label, endsAt: Date.now() + seconds * 1000, left: seconds, onEnd, button, advance };
   intervalId = setInterval(tick, 250);
-  clearTimeout(releaseTimeout);
-  keepAwake(true);
+  const panel = $('#timer');
+  panel.querySelector('.timer-next').innerHTML = next;
+  panel.querySelector('.timer-next').hidden = !next;
+  panel.querySelector('[data-action="add-time"]').hidden = !extend;
   draw();
 }
 
@@ -43,9 +47,12 @@ export function skipTimer() {
   next?.();
 }
 
-/** The wake lock is dropped when the app goes to the background; call this when it comes back. */
-export function resumeWakeLock() {
-  if (current) keepAwake(true);
+/** Add time to the running countdown (the "+15s" button). */
+export function addTime(seconds) {
+  if (!current) return;
+  current.endsAt += seconds * 1000;
+  current.left += seconds;
+  draw();
 }
 
 // Counts down to an end time rather than counting ticks, so the timer stays right
@@ -70,32 +77,16 @@ function stop() {
   clearInterval(intervalId);
   current = null;
   draw();
-  // Wait a moment before releasing, in case another timer starts straight away (rest after a set).
-  releaseTimeout = setTimeout(() => { if (!current) keepAwake(false); }, 1500);
 }
 
-// The bar's elements stay in place and only their text changes, so the button keeps keyboard focus.
+// The panel's elements stay in place and only their text changes, so the buttons keep keyboard focus.
 function draw() {
-  const bar = $('#timer');
-  bar.hidden = !current;
+  const panel = $('#timer');
+  panel.hidden = !current;
   if (!current) return;
-  bar.querySelector('.timer-label').textContent = current.label;
-  bar.querySelector('.timer-left').textContent = `${current.left}s`;
-  bar.querySelector('button').textContent = current.button;
-}
-
-// ---------- screen awake ----------
-
-async function keepAwake(on) {
-  try {
-    if (on && !wakeLock && navigator.wakeLock) {
-      wakeLock = await navigator.wakeLock.request('screen');
-      wakeLock.addEventListener('release', () => { wakeLock = null; });
-    } else if (!on && wakeLock) {
-      await wakeLock.release();
-      wakeLock = null;
-    }
-  } catch { /* not supported or not allowed: timers still work */ }
+  panel.querySelector('.timer-label').textContent = current.label;
+  panel.querySelector('.timer-left').textContent = `${Math.floor(current.left / 60)}:${pad(current.left % 60)}`;
+  panel.querySelector('[data-action="skip"]').textContent = current.button;
 }
 
 // ---------- sound ----------

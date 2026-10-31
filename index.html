@@ -21,9 +21,15 @@
 
   <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
   <div id="timer" class="timer" role="timer" hidden>
-    <span class="timer-label"></span>
-    <b class="timer-left"></b>
-    <button type="button" data-action="skip"></button>
+    <div class="timer-main">
+      <span class="timer-label"></span>
+      <b class="timer-left"></b>
+    </div>
+    <div class="timer-next" hidden></div>
+    <div class="timer-buttons">
+      <button type="button" data-action="add-time" hidden>+15s</button>
+      <button type="button" data-action="skip"></button>
+    </div>
   </div>
 
   <nav aria-label="Sections">
