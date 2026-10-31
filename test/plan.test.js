@@ -55,6 +55,13 @@ test('every level is harder than the one before, and the longest session is abou
   assert.ok(minutes(planItems(levelPlan(MAX_LEVEL)), MAX_LEVEL) <= 65);
 });
 
+test('level 1 has a 2 × 15 s plank, and no level has sit-ups', () => {
+  assert.ok(levelPlan(1).some(([id, sets, amount]) => id === 'plank' && sets === 2 && amount === 15));
+  for (let level = 1; level <= MAX_LEVEL; level++) {
+    assert.ok(levelPlan(level).every(([id]) => !/sit.?up/i.test(id + EXERCISES[id].name)), `level ${level}`);
+  }
+});
+
 test('neck work only on Monday, Wednesday and Friday', () => {
   const ids = key => todaysItems(day(key)).map(item => item.id);
   assert.ok(ids('2026-10-12').includes('neckIsometrics'));
