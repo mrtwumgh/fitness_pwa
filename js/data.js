@@ -142,7 +142,7 @@ export const GROWTH = {
 /** Levels 1 to 6. Each entry is [exercise, sets, reps or seconds]. */
 export const LEVELS = [
   [['wallPushUp', 1, 8], ['chairSquat', 1, 8], ['plank', 2, 15], ['neckIsometrics', 1, 5]],
-  [['wallPushUp', 2, 8], ['chairSquat', 2, 8], ['plank', 1, 10], ['gluteBridge', 1, 8], ['neckIsometrics', 2, 5]],
+  [['wallPushUp', 2, 8], ['chairSquat', 2, 8], ['plank', 2, 15], ['gluteBridge', 1, 8], ['neckIsometrics', 2, 5]],
   [['inclinePushUp', 2, 6], ['chairSquat', 2, 10], ['backpackRow', 2, 8], ['plank', 2, 15], ['gluteBridge', 2, 10],
    ['neckIsometrics', 2, 8], ['chinTuck', 1, 5]],
   [['inclinePushUp', 2, 10], ['squat', 2, 8], ['backpackRow', 2, 10], ['chairDip', 1, 6], ['deadBug', 2, 6], ['plank', 2, 20],

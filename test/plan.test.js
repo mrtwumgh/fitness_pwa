@@ -57,8 +57,13 @@ test('every level is harder than the one before, and the longest session stays u
   assert.ok(minutes(planItems(levelPlan(MAX_LEVEL)), MAX_LEVEL) <= 80);
 });
 
-test('level 1 has a 2 × 15 s plank, and no level has sit-ups', () => {
-  assert.ok(levelPlan(1).some(([id, sets, amount]) => id === 'plank' && sets === 2 && amount === 15));
+test('every level has a plank (2 × 15 s at level 1) that never gets easier, and no level has sit-ups', () => {
+  const plank = level => levelPlan(level).find(([id]) => id === 'plank');
+  assert.deepEqual(plank(1), ['plank', 2, 15]);
+  for (let level = 2; level <= MAX_LEVEL; level++) {
+    const [, sets, amount] = plank(level) ?? [];
+    assert.ok(sets >= plank(level - 1)[1] && amount >= plank(level - 1)[2], `level ${level}`);
+  }
   for (let level = 1; level <= MAX_LEVEL; level++) {
     assert.ok(levelPlan(level).every(([id]) => !/sit.?up/i.test(id + EXERCISES[id].name)), `level ${level}`);
   }
