@@ -2,13 +2,14 @@
 
 import { EXERCISES, WARMUP, COOLDOWN } from './data.js';
 import { st, save, logFor, resetAll } from './state.js';
-import { todaysItems, restSeconds, changeLevel, setLevel } from './plan.js';
-import { startTimer, runSteps, skipTimer, resumeWakeLock } from './timer.js';
+import { todaysItems, restFor, nextExercise, TRANSITION_SECONDS, WARMUP_TRANSITION_SECONDS, changeLevel, setLevel } from './plan.js';
+import { startTimer, runSteps, skipTimer, addTime } from './timer.js';
+import { workoutActive, endWorkout, resumeWakeLock } from './awake.js';
 import { syncReminders, turnOnReminders, turnOffReminders, sendTest } from './push.js';
 import { openVideo, closeVideo } from './video.js';
 import { toast } from './toast.js';
 import { $, clamp, dateKey } from './util.js';
-import { todayView } from './views/today.js';
+import { todayView, upNext } from './views/today.js';
 import { planView } from './views/plan.js';
 import { settingsView } from './views/settings.js';
 import './media.js';
@@ -74,6 +75,10 @@ document.addEventListener('click', event => {
       skipTimer();
       return;
 
+    case 'add-time':
+      addTime(15);
+      return;
+
     case 'set': {
       // Tapping set N marks sets 1..N done; tapping the last done set again undoes it.
       const item = todaysItem(id);
@@ -82,7 +87,7 @@ document.addEventListener('click', event => {
       const before = log.sets[id] || 0;
       const index = +button.dataset.index;
       log.sets[id] = index < before ? index : index + 1;
-      if (log.sets[id] > before && log.sets[id] < item.sets) startTimer('Rest', restSeconds());
+      if (log.sets[id] > before) afterSet(item, log);
       break;
     }
 
@@ -106,6 +111,7 @@ document.addEventListener('click', event => {
     case 'done': {
       const log = logFor();
       log.done = !log.done;
+      if (log.done) endWorkout();
       break;
     }
 
@@ -149,9 +155,31 @@ document.addEventListener('click', event => {
   commit();
 });
 
+/** After a set is done: rest if the exercise has sets left, otherwise move on to the next exercise. */
+function afterSet(item, log) {
+  workoutActive();
+  if (log.sets[item.planned] < item.sets) startTimer('Rest', restFor(item), { extend: true });
+  else moveOn(item.planned, TRANSITION_SECONDS);
+}
+
+/**
+ * Count down to the next unfinished exercise, showing what it is; `after` is the exercise just finished
+ * (left out after the warm-up). With none left, go straight to the cool-down.
+ */
+function moveOn(after, seconds) {
+  const next = nextExercise(todaysItems(), logFor(), after);
+  if (!next) { showCard('cooldown'); return; }
+  startTimer('Up next', seconds, { button: "I'm ready", advance: true, next: upNext(next), onEnd: () => showCard(next.planned) });
+}
+
+/** Scroll a Today card into view, once the redraw that may follow this tap is done. */
+function showCard(key) {
+  requestAnimationFrame(() => document.querySelector(`[data-card="${key}"]`)?.scrollIntoView({ block: 'start' }));
+}
+
 /**
  * One timed set: 5 seconds to get into position, then the hold (each position in turn for neck work).
- * When it finishes the set is ticked off and, if more sets remain, the rest timer starts.
+ * When it finishes the set is ticked off, then it's rest or the next exercise as for any set.
  * Stopping part-way doesn't count the set.
  */
 function startHold(planned) {
@@ -166,17 +194,20 @@ function startHold(planned) {
     ...holds.map(hold => ({ ...hold, button: 'Stop', advance: false })),
   ];
   runSteps(steps, () => {
-    const sets = todaysItem(planned)?.sets ?? item.sets;   // "Too hard today" may have changed the dose meanwhile
+    const now = todaysItem(planned) ?? item;   // "Too hard today" may have changed the dose meanwhile
     const log = logFor();
-    log.sets[planned] = Math.min(sets, (log.sets[planned] || 0) + 1);
-    if (log.sets[planned] < sets) startTimer('Rest', restSeconds());
+    log.sets[planned] = Math.min(now.sets, (log.sets[planned] || 0) + 1);
+    afterSet(now, log);
     commit();
   });
 }
 
+/** Warm-up or cool-down. The warm-up leads into the first exercise; finishing the cool-down ends the workout. */
 function runRoutine(id, steps) {
   runSteps(steps.map(({ name, seconds }, i) => ({ label: `${i + 1}/${steps.length} ${name}`, seconds })), () => {
     logFor()[id] = true;
+    if (id === 'warmup') moveOn(undefined, WARMUP_TRANSITION_SECONDS);
+    else endWorkout();
     commit();
   });
 }

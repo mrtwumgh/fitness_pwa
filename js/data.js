@@ -7,6 +7,7 @@
  *   per:     extra label after the dose, e.g. 'per side'
  *   neck:    true = only on neck days (Mon, Wed, Fri)
  *   holds:   for timed exercises done in several positions, each position; the timer runs them in turn
+ *   rest:    seconds of rest between sets, instead of the level's default (see restSeconds in plan.js)
  *   gif:     ExerciseDB animation id, shown on the card (see DEMO_GIF_URL)
  *   gifNote: shown under the animation when it differs from how we do it
  *   video:   { id, by } — YouTube video played inside the app
@@ -101,14 +102,14 @@ export const EXERCISES = {
     cue: 'Hold a wall, rise onto your toes, lower slowly.',
   },
   neckIsometrics: {
-    name: 'Neck isometrics', unit: 'seconds', per: 'per direction', neck: true,
+    name: 'Neck isometrics', unit: 'seconds', per: 'per direction', neck: true, rest: 60,
     holds: ['Forehead', 'Left side', 'Right side', 'Back of head'],
     search: 'neck isometric exercises physiotherapist',
     video: { id: 'j9Gy2HFo7W0', by: 'Physio REHAB (Tim Keeley, physiotherapist)' },
     cue: 'Sit tall. Press your palm against your forehead, then each side of your head, then the back of your head. Your head must not move. Push gently and hold. One round = all 4 directions. Go gently, never jerk, stop if you feel pain or dizziness.',
   },
   chinTuck: {
-    name: 'Chin tuck', unit: 'reps', neck: true, search: 'chin tucks physiotherapist',
+    name: 'Chin tuck', unit: 'reps', neck: true, rest: 60, search: 'chin tucks physiotherapist',
     video: { id: '7rnlAVhAK-8', by: 'Ask Doctor Jo (physical therapist)' },
     cue: 'Sit tall looking ahead. Draw your chin straight back without tilting your head, hold 5 seconds.',
   },
@@ -130,7 +131,7 @@ export const MAX_LEVEL = 12;
 /**
  * How levels 7 to MAX_LEVEL grow from level 6 (see levelPlan in plan.js): each level adds `reps`
  * or `seconds`, and every second level adds a set, up to the limits below. The limits keep the longest
- * session to about an hour. Neck work stays at its level 6 dose.
+ * session to about an hour and a quarter. Neck work stays at its level 6 dose.
  *   maxRepsPerSide: for exercises done on each side (those with a `per` label)
  */
 export const GROWTH = {
@@ -140,8 +141,8 @@ export const GROWTH = {
 
 /** Levels 1 to 6. Each entry is [exercise, sets, reps or seconds]. */
 export const LEVELS = [
-  [['wallPushUp', 1, 8], ['chairSquat', 1, 8], ['neckIsometrics', 1, 5]],
-  [['wallPushUp', 2, 8], ['chairSquat', 2, 8], ['plank', 1, 10], ['gluteBridge', 1, 8], ['neckIsometrics', 2, 5]],
+  [['wallPushUp', 1, 8], ['chairSquat', 1, 8], ['plank', 2, 15], ['neckIsometrics', 1, 5]],
+  [['wallPushUp', 2, 8], ['chairSquat', 2, 8], ['plank', 2, 15], ['gluteBridge', 1, 8], ['neckIsometrics', 2, 5]],
   [['inclinePushUp', 2, 6], ['chairSquat', 2, 10], ['backpackRow', 2, 8], ['plank', 2, 15], ['gluteBridge', 2, 10],
    ['neckIsometrics', 2, 8], ['chinTuck', 1, 5]],
   [['inclinePushUp', 2, 10], ['squat', 2, 8], ['backpackRow', 2, 10], ['chairDip', 1, 6], ['deadBug', 2, 6], ['plank', 2, 20],
