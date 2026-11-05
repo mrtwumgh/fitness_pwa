@@ -11,9 +11,11 @@
  *   gif:     ExerciseDB animation id, shown on the card (see DEMO_GIF_URL)
  *   gifNote: shown under the animation when it differs from how we do it
  *   video:   { id, by } — YouTube video played inside the app
- *   search:  YouTube search text, only used if the animation can't load and there's no video
+ *   search:  YouTube search text for a "Watch how on YouTube" link, shown when there's no video and
+ *            the animation is missing or can't load
  *
- * Animations and videos were matched to the cues below by hand. Every exercise has one or both.
+ * Animations and videos were matched to the cues below by hand. An exercise with neither gets the YouTube link.
+ * Everything here needs no equipment beyond a wall, a sturdy chair and a sturdy table.
  */
 export const EXERCISES = {
   wallPushUp: {
@@ -49,10 +51,9 @@ export const EXERCISES = {
     gif: 'RrLske5', gifNote: 'Shown on a bench. A sturdy chair against a wall works the same.',
     cue: 'Hands on the edge of a sturdy chair placed against a wall, knees bent. Lower your elbows straight back only as deep as is comfortable, then press up.',
   },
-  backpackRow: {
-    name: 'Backpack row', unit: 'reps', search: 'backpack bent over row form',
-    gif: 'BJ0Hz5L', gifNote: 'Shown with dumbbells. Hold your backpack the same way.',
-    cue: 'Hold a loaded backpack, hinge at the hips with a flat back. Pull the bag to your lower ribs, squeeze your shoulder blades, lower slowly. Start light.',
+  reverseSnowAngel: {
+    name: 'Reverse snow angel', unit: 'reps', search: 'reverse snow angel exercise form',
+    cue: 'Lie face down, arms by your sides, palms down, looking at the floor. Lift your chest and arms slightly. Keeping your arms off the floor, sweep them out wide and overhead, then back to your hips. Move slowly and squeeze your shoulder blades together.',
   },
   superman: {
     name: 'Superman', unit: 'reps',
@@ -143,13 +144,13 @@ export const GROWTH = {
 export const LEVELS = [
   [['wallPushUp', 1, 8], ['chairSquat', 1, 8], ['plank', 2, 15], ['neckIsometrics', 1, 5]],
   [['wallPushUp', 2, 8], ['chairSquat', 2, 8], ['plank', 2, 15], ['gluteBridge', 1, 8], ['neckIsometrics', 2, 5]],
-  [['inclinePushUp', 2, 6], ['chairSquat', 2, 10], ['backpackRow', 2, 8], ['plank', 2, 15], ['gluteBridge', 2, 10],
+  [['inclinePushUp', 2, 6], ['chairSquat', 2, 10], ['reverseSnowAngel', 2, 8], ['plank', 2, 15], ['gluteBridge', 2, 10],
    ['neckIsometrics', 2, 8], ['chinTuck', 1, 5]],
-  [['inclinePushUp', 2, 10], ['squat', 2, 8], ['backpackRow', 2, 10], ['chairDip', 1, 6], ['deadBug', 2, 6], ['plank', 2, 20],
+  [['inclinePushUp', 2, 10], ['squat', 2, 8], ['reverseSnowAngel', 2, 10], ['chairDip', 1, 6], ['deadBug', 2, 6], ['plank', 2, 20],
    ['gluteBridge', 2, 12], ['neckIsometrics', 3, 8], ['chinTuck', 2, 5]],
-  [['kneePushUp', 3, 8], ['squat', 3, 10], ['reverseLunge', 2, 6], ['backpackRow', 3, 10], ['chairDip', 2, 8], ['superman', 2, 8],
+  [['kneePushUp', 3, 8], ['squat', 3, 10], ['reverseLunge', 2, 6], ['reverseSnowAngel', 3, 10], ['chairDip', 2, 8], ['superman', 2, 8],
    ['deadBug', 2, 8], ['birdDog', 2, 6], ['plank', 3, 20], ['calfRaise', 2, 12], ['neckIsometrics', 3, 10], ['chinTuck', 2, 8]],
-  [['pushUp', 3, 8], ['pikePushUp', 2, 6], ['squat', 3, 12], ['reverseLunge', 3, 8], ['backpackRow', 3, 12], ['chairDip', 3, 10],
+  [['pushUp', 3, 8], ['pikePushUp', 2, 6], ['squat', 3, 12], ['reverseLunge', 3, 8], ['reverseSnowAngel', 3, 12], ['chairDip', 3, 10],
    ['superman', 3, 10], ['deadBug', 3, 10], ['birdDog', 3, 8], ['plank', 3, 30], ['gluteBridge', 3, 15], ['calfRaise', 3, 15],
    ['neckIsometrics', 3, 10], ['chinTuck', 3, 10]],
 ];
