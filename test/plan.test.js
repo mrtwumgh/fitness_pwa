@@ -26,12 +26,21 @@ test('dateKey is the local date as YYYY-MM-DD', () => {
   assert.equal(dateKey(new Date(2026, 11, 31, 0, 0)), '2026-12-31');
 });
 
-test('every exercise used anywhere exists and has an animation or a video', () => {
+test('every exercise used anywhere exists and has an animation, a video or a YouTube search', () => {
   for (let level = 1; level <= MAX_LEVEL; level++) {
     for (const [id] of levelPlan(level)) assert.ok(EXERCISES[id], `level ${level}: ${id}`);
   }
   for (const [from, to] of Object.entries(EASIER)) assert.ok(EXERCISES[from] && EXERCISES[to], `${from} -> ${to}`);
-  for (const [id, ex] of Object.entries(EXERCISES)) assert.ok(ex.gif || ex.video, id);
+  for (const [id, ex] of Object.entries(EXERCISES)) assert.ok(ex.gif || ex.video || ex.search, id);
+});
+
+test('reverse snow angels replace the backpack row with the same sets and reps', () => {
+  const dose = level => levelPlan(level).find(([id]) => id === 'reverseSnowAngel')?.slice(1);
+  assert.deepEqual([3, 4, 5, 6].map(dose), [[2, 8], [2, 10], [3, 10], [3, 12]]);
+  assert.deepEqual([1, 2].map(dose), [undefined, undefined]);
+  for (let level = 1; level <= MAX_LEVEL; level++) {
+    assert.ok(levelPlan(level).every(([id]) => id !== 'backpackRow'), `level ${level}`);
+  }
 });
 
 test('levels above 6 grow slowly from level 6, within the limits, and neck work stays the same', () => {

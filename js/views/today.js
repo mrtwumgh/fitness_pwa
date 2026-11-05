@@ -69,17 +69,17 @@ function exerciseCard(item, log) {
 }
 
 /**
- * The exercise demo: a looping animation if there is one, otherwise a tap-to-play video.
+ * The exercise demo: a looping animation if there is one, otherwise a tap-to-play video,
+ * otherwise a link to a YouTube search.
  * If an animation can't load (e.g. offline before it was ever saved), media.js removes it;
  * the card's "Watch video" link remains, or for animation-only exercises a YouTube search link appears.
  */
 function demo(id) {
   const ex = EXERCISES[id];
-  if (!ex.gif) return videoButton(id);
+  if (!ex.gif) return ex.video ? videoButton(id) : `<figure class="demo">${searchLink(id, 'Watch how on YouTube')}</figure>`;
   const src = DEMO_GIF_URL(ex.gif);
   const failed = imageFailed(src);
-  const fallback = ex.video ? ''
-    : `<a class="demo-fallback" href="${youtubeSearch(id)}" target="_blank" rel="noopener"${failed ? '' : ' hidden'}>Animation unavailable. Find a video on YouTube</a>`;
+  const fallback = ex.video ? '' : searchLink(id, 'Animation unavailable. Find a video on YouTube', !failed);
   if (failed) return fallback && `<figure class="demo">${fallback}</figure>`;
   return `<figure class="demo">
       <img class="demo-gif" src="${src}" alt="Animation of ${ex.name.toLowerCase()}" width="180" height="180" loading="lazy">
@@ -87,6 +87,9 @@ function demo(id) {
       ${fallback}
     </figure>`;
 }
+
+const searchLink = (id, text, hidden = false) =>
+  `<a class="demo-fallback" href="${youtubeSearch(id)}" target="_blank" rel="noopener"${hidden ? ' hidden' : ''}>${text}</a>`;
 
 function videoButton(id) {
   const ex = EXERCISES[id];
